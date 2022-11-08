@@ -7,7 +7,7 @@ Helper functions for flowbyactivity and flowbysector data
 
 import pandas as pd
 import numpy as np
-from esupy.dqi import get_weighted_average
+from esupy.dqi import get_weighted_average, adjust_dqi_scores
 import flowsa
 from flowsa.common import fbs_activity_fields, sector_level_key, \
     load_crosswalk, fbs_fill_na_dict, check_activities_sector_like, \
@@ -1183,3 +1183,18 @@ def aggregate_and_subset_for_target_sectors(df, method):
     df_subset = subset_df_by_sector_list(df_agg, sector_list)
 
     return df_subset
+
+
+def apply_target_year(fbs, target_year=None):
+    """
+    :param fbs: df of flowbysector
+    :param target_year: int of target_year for fbs
+    :return: df of flowbysector with year updated to target_year and
+        temporalCorrelation updated
+    """
+    if not target_year:
+        target_year = max(fbs['Year'])
+    fbs = adjust_dqi_scores(fbs, abs(fbs['Year'] - target_year),
+                            'TemporalCorrelation')
+    fbs['Year'] = target_year
+    return fbs

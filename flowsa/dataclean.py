@@ -300,9 +300,9 @@ def reset_fbs_dq_scores(df):
     # reset DR, as current values are misleading
     log.info('Reset DataReliability to None')
     df = df.assign(DataReliability=None)
-    # reset TC, as current values are misleading
-    log.info('Reset TemporalCorrelation to None')
-    df = df.assign(TemporalCorrelation=None)
+    # # reset TC, as current values are misleading
+    # log.info('Reset TemporalCorrelation to None')
+    # df = df.assign(TemporalCorrelation=None)
     # reset GC, as current values are misleading
     log.info('Reset GeographicalCorrelation to None')
     df = df.assign(GeographicalCorrelation=None)

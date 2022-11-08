@@ -35,7 +35,7 @@ from flowsa.fbs_allocation import direct_allocation_method, \
     function_allocation_method, dataset_allocation_method
 from flowsa.flowbyfunctions import agg_by_geoscale, sector_aggregation, \
     aggregator, subset_df_by_geoscale, sector_disaggregation, \
-    update_geoscale, subset_df_by_sector_list
+    update_geoscale, subset_df_by_sector_list, apply_target_year
 from flowsa.location import merge_urb_cnty_pct
 from flowsa.metadata import set_fb_meta, write_metadata
 from flowsa.schema import flow_by_activity_fields, flow_by_sector_fields, \
@@ -389,6 +389,9 @@ def main(**kwargs):
     # prior to aggregating, replace MetaSources string with all sources
     # that share context/flowable/sector values
     fbss = harmonize_FBS_columns(fbss)
+    # all year values should be the same prior to aggregating, adjust
+    # temporal correlation
+    fbss = apply_target_year(fbss, method.get('target_year'))
     # aggregate df as activities might have data for
     # the same specified sector length
     fbss = aggregator(fbss, fbs_default_grouping_fields)
