@@ -172,9 +172,11 @@ def reassign_process_to_sectors(df, year, file_list, fbsconfigpath):
                                inplace=True)
 
     # obtain and prepare SCC dataset
+    keep_sec_cntx = True if any('/' in s for s in df.Compartment.unique()) else False
     df_fbp = stewi.getInventory('NEI', year,
                                 stewiformat='flowbyprocess',
-                                download_if_missing=True)
+                                download_if_missing=True,
+                                keep_sec_cntx=keep_sec_cntx)
     df_fbp = df_fbp[df_fbp['Process'].isin(df_adj['source_process'])]
     df_fbp['Source'] = 'NEI'
     df_fbp = addChemicalMatches(df_fbp)
@@ -193,20 +195,21 @@ def reassign_process_to_sectors(df, year, file_list, fbsconfigpath):
                           right_on=['source_naics', 'source_process'])
 
     # subtract emissions by SCC from specific facilities
-    df_emissions = df_fbp.groupby(['FacilityID', 'FlowName']).agg(
-        {'FlowAmount': 'sum'})
-    df_emissions.rename(columns={'FlowAmount': 'Emissions'}, inplace=True)
+    df_emissions = (df_fbp
+                    .groupby(['FacilityID', 'FlowName', 'Compartment'])
+                    .agg({'FlowAmount': 'sum'})
+                    .rename(columns={'FlowAmount': 'Emissions'}))
     df = df.merge(df_emissions, how='left',
-                  on=['FacilityID', 'FlowName'])
+                  on=['FacilityID', 'FlowName', 'Compartment'])
     df[['Emissions']] = df[['Emissions']].fillna(value=0)
     df['FlowAmount'] = df['FlowAmount'] - df['Emissions']
     df.drop(columns=['Emissions'], inplace=True)
 
     # add back in emissions under the correct target NAICS
-    df_fbp.drop(columns=['Process', 'NAICS', 'source_naics', 'source_process',
-                         'ProcessType', 'SRS_CAS', 'SRS_ID'],
-                inplace=True)
-    df_fbp.rename(columns={'target_naics': 'NAICS'}, inplace=True)
+    df_fbp = (df_fbp
+              .drop(columns=['Process', 'NAICS', 'source_naics', 'source_process',
+                             'ProcessType', 'SRS_CAS', 'SRS_ID'])
+              .rename(columns={'target_naics': 'NAICS'}))
     df = pd.concat([df, df_fbp], ignore_index=True)
     return df
 
