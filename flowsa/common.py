@@ -10,7 +10,7 @@ import yaml
 import pandas as pd
 import numpy as np
 from dotenv import load_dotenv
-from esupy.processed_data_mgmt import create_paths_if_missing
+from esupy.processed_data_mgmt import mkdir_if_missing
 import flowsa.flowsa_yaml as flowsa_yaml
 import flowsa.exceptions
 from flowsa.schema import flow_by_activity_fields, flow_by_sector_fields, \
@@ -306,7 +306,7 @@ def rename_log_file(filename, fb_meta):
                     f'{"_" + fb_meta.git_hash if fb_meta.git_hash else ""}'
                     f'.log')
     # create log directory if missing
-    create_paths_if_missing(logoutputpath)
+    mkdir_if_missing(logoutputpath)
     # rename the standard log file name (os.rename throws error if file
     # already exists)
     shutil.copy(log_file, new_log_name)
@@ -318,7 +318,7 @@ def rename_log_file(filename, fb_meta):
                     f'{"_" + fb_meta.git_hash if fb_meta.git_hash else ""}'
                     f'_validation.log')
     # create log directory if missing
-    create_paths_if_missing(logoutputpath)
+    mkdir_if_missing(logoutputpath)
     # rename the standard log file name (os.rename throws error if file
     # already exists)
     shutil.copy(log_file, new_log_name)

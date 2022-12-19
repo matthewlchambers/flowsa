@@ -4,7 +4,7 @@ import logging
 import subprocess
 from importlib.metadata import version
 from pathlib import Path
-from esupy.processed_data_mgmt import Paths, create_paths_if_missing
+from esupy.processed_data_mgmt import Paths, mkdir_if_missing
 from esupy.util import get_git_hash
 
 try:
@@ -27,18 +27,18 @@ datasourcescriptspath = MODULEPATH + 'data_source_scripts/'
 
 # "Paths()" are a class defined in esupy
 paths = Paths()
-paths.local_path = os.path.realpath(paths.local_path + "/flowsa")
-outputpath = paths.local_path.replace('\\', '/') + '/'
-fbaoutputpath = outputpath + 'FlowByActivity/'
-fbsoutputpath = outputpath + 'FlowBySector/'
-biboutputpath = outputpath + 'Bibliography/'
-logoutputpath = outputpath + 'Log/'
-diffpath = outputpath + 'FBSComparisons/'
-plotoutputpath = outputpath + 'Plots/'
+paths.local_path = paths.local_path / 'flowsa'
+outputpath = paths.local_path
+fbaoutputpath = outputpath / 'FlowByActivity'
+fbsoutputpath = outputpath / 'FlowBySector'
+biboutputpath = outputpath / 'Bibliography'
+logoutputpath = outputpath / 'Log'
+diffpath = outputpath / 'FBSComparisons'
+plotoutputpath = outputpath / 'Plots'
 
 # ensure directories exist
-create_paths_if_missing(logoutputpath)
-create_paths_if_missing(plotoutputpath)
+mkdir_if_missing(logoutputpath)
+mkdir_if_missing(plotoutputpath)
 
 DEFAULT_DOWNLOAD_IF_MISSING = False
 
@@ -75,11 +75,11 @@ vLogDetailed.propagate = False
 
 # create handlers
 # create handler for overall logger
-log_fh = logging.FileHandler(logoutputpath + 'flowsa.log',
+log_fh = logging.FileHandler(logoutputpath / 'flowsa.log',
                              mode='w', encoding='utf-8')
 log_fh.setFormatter(formatter)
 # create handler for general validation information
-vLog_fh = logging.FileHandler(logoutputpath + 'validation_flowsa.log',
+vLog_fh = logging.FileHandler(logoutputpath / 'validation_flowsa.log',
                               mode='w', encoding='utf-8')
 vLog_fh.setFormatter(formatter)
 # create console handler
