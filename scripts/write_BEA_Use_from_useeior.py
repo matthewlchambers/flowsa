@@ -82,5 +82,5 @@ Industries = model.rx2("BEA").rx2("Industries")
 # Apply it to the df index
 UseIndustryTransactions.index = Industries
 # Write out to csv
-UseIndustryTransactions.to_csv(externaldatapath +
+UseIndustryTransactions.to_csv(externaldatapath /
                                "BEA_2012_Detail_Use_Industry_Transactions.csv")

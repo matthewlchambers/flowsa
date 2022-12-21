@@ -312,8 +312,8 @@ def stackedBarChart(df,
         if (trace.name in names) else names.add(trace.name))
 
     fig.show()
-    log.info(f'Saving file to %s', f"{plotoutputpath}{filename}.svg")
-    fig.write_image(f"{plotoutputpath}{filename}.svg", width=graphic_width,
+    log.info(f'Saving file to {plotoutputpath/filename}.svg')
+    fig.write_image(plotoutputpath / f'{filename}.svg', width=graphic_width,
                     height=graphic_height)
 
 
@@ -458,7 +458,7 @@ def generateSankeyData(methodname,
                 df = df[df[f'Sector{s}By'].isin(sector_list)]
 
     # add sector names
-    sankeymappingfile = f'{datapath}VisualizationEssentials.csv'
+    sankeymappingfile = datapath / 'VisualizationEssentials.csv'
     df2 = addSectorNames(df, mappingfile=sankeymappingfile)
 
     # subset df and aggregate flows by sectors
@@ -493,7 +493,7 @@ def generateSankeyData(methodname,
          })
 
     # add colors
-    vis = pd.read_csv(f'{datapath}VisualizationEssentials.csv')
+    vis = pd.read_csv(datapath / 'VisualizationEssentials.csv')
     nodes = nodes.merge(vis[['Sector', 'Color']], how='left')
     # fill in any colors missing from the color dictionary with random colors
     nodes['Color'] = nodes['Color'].apply(lambda x: x if pd.notnull(x) else
@@ -635,6 +635,6 @@ def generateSankeyDiagram(methodnames,
         height = plot_dimension[1]
 
     fig.show()
-    log.info(f'Saving file to %s', f"{plotoutputpath}{filename}.svg")
+    log.info(f'Saving file to {plotoutputpath/filename}.svg')
     fig.write_image(f"{plotoutputpath}{filename}.svg",
                     width=width, height=height)

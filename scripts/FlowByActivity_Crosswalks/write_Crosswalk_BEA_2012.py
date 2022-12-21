@@ -31,7 +31,7 @@ def write_BEA_crosswalk(level='Detail'):
     # set order
     df = df[['ActivitySourceName', 'Activity', 'SectorSourceName', 'Sector', 'SectorType']]
     # save as csv
-    df.to_csv(datapath + "activitytosectormapping/" +
+    df.to_csv(datapath / "activitytosectormapping" /
               f"NAICS_Crosswalk_BEA_2012_{level}.csv", index=False)
 
 if __name__ == '__main__':

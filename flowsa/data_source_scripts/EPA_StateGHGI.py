@@ -15,7 +15,7 @@ import flowsa.exceptions
 def epa_state_ghgi_parse(*, source, year, config, **_):
 
     try:
-        with open(externaldatapath + config.get('file')) as f:
+        with open(externaldatapath / config.get('file')) as f:
             data = json.load(f)
     except FileNotFoundError:
         raise FileNotFoundError('State GHGI data not yet available for '

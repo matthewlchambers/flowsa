@@ -7,7 +7,6 @@ data directory. Parses EPA SIT data to flowbyactivity format.
 """
 
 import pandas as pd
-import os
 from flowsa.settings import externaldatapath, log
 from flowsa.flowbyfunctions import assign_fips_location_system
 from flowsa.location import apply_county_FIPS
@@ -15,13 +14,13 @@ from flowsa.location import apply_county_FIPS
 def epa_sit_parse(*, source, year, config, **_):
 
     state = config['state']
-    filepath = f"{externaldatapath}/SIT_data/{state}/{config['file']}"
+    filepath = externaldatapath / 'SIT_data' / f'{state}/{config["file"]}'
     # dictionary containing Excel sheet-specific information
     sheet_dict = config['sheet_dict']
     # initialize the dataframe
     df0 = pd.DataFrame()
 
-    if not os.path.exists(filepath):
+    if not filepath.is_file():
         raise FileNotFoundError(f'SIT file not found in {filepath}')
 
     # for each sheet in the Excel file containing data...

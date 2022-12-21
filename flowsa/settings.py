@@ -7,23 +7,20 @@ from pathlib import Path
 from esupy.processed_data_mgmt import Paths, mkdir_if_missing
 from esupy.util import get_git_hash
 
-try:
-    MODULEPATH = \
-        os.path.dirname(os.path.realpath(__file__)).replace('\\', '/') + '/'
-except NameError:
-    MODULEPATH = 'flowsa/'
 
-datapath = MODULEPATH + 'data/'
-crosswalkpath = datapath + 'activitytosectormapping/'
-externaldatapath = datapath + 'external_data/'
-process_adjustmentpath = datapath + 'process_adjustments/'
+MODULEPATH = Path(__file__).resolve().parent
 
-methodpath = MODULEPATH + 'methods/'
-sourceconfigpath = methodpath + 'flowbyactivitymethods/'
-flowbysectormethodpath = methodpath + 'flowbysectormethods/'
-flowbysectoractivitysetspath = methodpath + 'flowbysectoractivitysets/'
+datapath = MODULEPATH / 'data'
+crosswalkpath = datapath / 'activitytosectormapping'
+externaldatapath = datapath / 'external_data'
+process_adjustmentpath = datapath / 'process_adjustments'
 
-datasourcescriptspath = MODULEPATH + 'data_source_scripts/'
+methodpath = MODULEPATH / 'methods'
+sourceconfigpath = methodpath / 'flowbyactivitymethods'
+flowbysectormethodpath = methodpath / 'flowbysectormethods'
+flowbysectoractivitysetspath = methodpath / 'flowbysectoractivitysets'
+
+datasourcescriptspath = MODULEPATH / 'data_source_scripts'
 
 # "Paths()" are a class defined in esupy
 paths = Paths()
@@ -43,10 +40,8 @@ mkdir_if_missing(plotoutputpath)
 DEFAULT_DOWNLOAD_IF_MISSING = False
 
 # paths to scripts
-scriptpath = \
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))
-                    ).replace('\\', '/') + '/scripts/'
-scriptsFBApath = scriptpath + 'FlowByActivity_Datasets/'
+scriptpath = MODULEPATH.parent / 'scripts'
+scriptsFBApath = scriptpath / 'FlowByActivity_Datasets'
 
 # define 4 logs, one for general information, one for major validation
 # logs that are also included in the general info log, one for very specific

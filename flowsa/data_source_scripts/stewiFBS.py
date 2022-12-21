@@ -154,7 +154,7 @@ def reassign_process_to_sectors(df, year, file_list, fbsconfigpath):
     """
     df_adj = pd.DataFrame()
     for file in file_list:
-        fpath = f"{process_adjustmentpath}{file}.csv"
+        fpath = process_adjustmentpath / f'{file}.csv'
         if fbsconfigpath:
             f_out_path = f"{fbsconfigpath}process_adjustments/{file}.csv"
             if os.path.isfile(f_out_path):

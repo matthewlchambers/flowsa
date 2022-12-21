@@ -140,7 +140,7 @@ def getFlowBySector(methodname, fbsconfigpath=None,
     # Otherwise (that is, if one of the above methods successfuly loaded the
     # FBS), log it.
     else:
-        log.info('Loaded %s from %s', methodname, fbsoutputpath)
+        log.info(f'Loaded {methodname} from {fbsoutputpath}')
     return fbs
 
 

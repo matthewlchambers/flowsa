@@ -32,4 +32,4 @@ if __name__ == '__main__':
     # rename columns to match flowbyactivity format
     df = df.rename(columns={"State (FIPS)": "State_FIPS"})
 
-    df.to_csv(datapath + "Census_Regions_and_Divisions.csv", index=False)
+    df.to_csv(datapath / "Census_Regions_and_Divisions.csv", index=False)

@@ -9,6 +9,7 @@ import os
 import yaml
 import pandas as pd
 import numpy as np
+from pathlib import Path
 from dotenv import load_dotenv
 from esupy.processed_data_mgmt import mkdir_if_missing
 import flowsa.flowsa_yaml as flowsa_yaml
@@ -53,12 +54,12 @@ def load_env_file_key(env_file, key):
     :return: str, value of the key stored in the env
     """
     if env_file == 'API_Key':
-        load_dotenv(f'{MODULEPATH}API_Keys.env', verbose=True)
+        load_dotenv(MODULEPATH / 'API_Keys.env', verbose=True)
         value = os.getenv(key)
         if value is None:
             raise flowsa.exceptions.APIError(api_source=key)
     else:
-        load_dotenv(f'{MODULEPATH}external_paths.env', verbose=True)
+        load_dotenv(MODULEPATH / 'external_paths.env', verbose=True)
         value = os.getenv(key)
         if value is None:
             raise flowsa.exceptions.EnvError(key=key)
@@ -81,7 +82,7 @@ def load_crosswalk(crosswalk_name):
 
     fn = cw_dict.get(crosswalk_name)
 
-    cw = pd.read_csv(f'{datapath}{fn}.csv', dtype="str")
+    cw = pd.read_csv(datapath / f'{fn}.csv', dtype="str")
     return cw
 
 
@@ -128,7 +129,7 @@ def load_yaml_dict(filename, flowbytype=None, filepath=None):
         if filepath is not None:
             log.info(f'Loading {filename}.yaml from'
                      f' {filepath}flowbysectormethods/')
-            folder = f'{filepath}flowbysectormethods/'
+            folder = Path(f'{filepath}flowbysectormethods')
         else:
             if flowbytype == 'FBA':
                 folder = sourceconfigpath
@@ -136,7 +137,7 @@ def load_yaml_dict(filename, flowbytype=None, filepath=None):
                 folder = flowbysectormethodpath
             else:
                 raise KeyError('Must specify either \'FBA\' or \'FBS\'')
-    yaml_path = folder + filename + '.yaml'
+    yaml_path = folder / f'{filename}.yaml'
 
     try:
         with open(yaml_path, 'r') as f:
@@ -153,8 +154,8 @@ def load_values_from_literature_citations_config():
     values from the literature come from
     :return: dictionary of the values from the literature information
     """
-    sfile = (f'{datapath}bibliographyinfo/'
-             f'values_from_literature_source_citations.yaml')
+    sfile = (datapath / 'bibliographyinfo' /
+             'values_from_literature_source_citations.yaml')
     with open(sfile, 'r') as f:
         config = yaml.safe_load(f)
     return config
@@ -166,7 +167,7 @@ def load_fbs_methods_additional_fbas_config():
     values from the literature come from
     :return: dictionary of the values from the literature information
     """
-    sfile = f'{datapath}bibliographyinfo/fbs_methods_additional_fbas.yaml'
+    sfile = datapath / 'bibliographyinfo' / 'fbs_methods_additional_fbas.yaml'
     with open(sfile, 'r') as f:
         config = yaml.safe_load(f)
     return config
@@ -178,7 +179,7 @@ def load_functions_loading_fbas_config():
     values from the literature come from
     :return: dictionary of the values from the literature information
     """
-    sfile = datapath + 'bibliographyinfo/functions_loading_fbas.yaml'
+    sfile = datapath / 'bibliographyinfo' / 'functions_loading_fbas.yaml'
     with open(sfile, 'r') as f:
         config = yaml.safe_load(f)
     return config
@@ -275,7 +276,7 @@ def get_flowsa_base_name(filedirectory, filename, extension):
     If filename does not match filename within flowsa due to added extensions
     onto the filename, cycle through
     name, dropping strings after each underscore until the name is found
-    :param filedirectory: string, path to directory
+    :param filedirectory: Path, path to directory
     :param filename: string, name of original file searching for
     :param extension: string, type of file, such as "yaml" or "py"
     :return: string, corrected file path name
@@ -284,7 +285,7 @@ def get_flowsa_base_name(filedirectory, filename, extension):
     # underscore. Repeat this process until the file name exists or no
     # underscores are left.
     while '_' in filename:
-        if os.path.exists(f"{filedirectory}{filename}.{extension}"):
+        if (filedirectory / f"{filename}.{extension}").is_file():
             break
         filename, _ = filename.rsplit('_', 1)
 
@@ -299,24 +300,24 @@ def rename_log_file(filename, fb_meta):
     :return: modified log file name
     """
     # original log file name - all log statements
-    log_file = f'{logoutputpath}{"flowsa.log"}'
+    log_file = logoutputpath / 'flowsa.log'
     # generate new log name
-    new_log_name = (f'{logoutputpath}{filename}_v'
+    new_log_name = (logoutputpath / f'{filename}_v'
                     f'{fb_meta.tool_version}'
                     f'{"_" + fb_meta.git_hash if fb_meta.git_hash else ""}'
-                    f'.log')
+                    '.log')
     # create log directory if missing
     mkdir_if_missing(logoutputpath)
     # rename the standard log file name (os.rename throws error if file
     # already exists)
     shutil.copy(log_file, new_log_name)
     # original log file name - validation
-    log_file = f'{logoutputpath}{"validation_flowsa.log"}'
+    log_file = logoutputpath / 'validation_flowsa.log'
     # generate new log name
-    new_log_name = (f'{logoutputpath}{filename}_v'
+    new_log_name = (logoutputpath / f'{filename}_v'
                     f'{fb_meta.tool_version}'
                     f'{"_" + fb_meta.git_hash if fb_meta.git_hash else ""}'
-                    f'_validation.log')
+                    '_validation.log')
     # create log directory if missing
     mkdir_if_missing(logoutputpath)
     # rename the standard log file name (os.rename throws error if file
@@ -357,8 +358,8 @@ def check_activities_sector_like(df_load, sourcename=None):
         sectorLike = load_yaml_dict('source_catalog')[sourcename][
             'sector-like_activities']
     except KeyError:
-        log.info(f'%s not found in {datapath}source_catalog.yaml, assuming '
-                 f'activities are not sector-like', sourcename)
+        log.info(f'{sourcename} not found in {datapath}source_catalog.yaml, assuming '
+                 f'activities are not sector-like')
         sectorLike = False
 
     return sectorLike
@@ -380,7 +381,7 @@ def str2bool(v):
 
 def check_method_status():
     """Read the current method status"""
-    yaml_path = methodpath + 'method_status.yaml'
+    yaml_path = methodpath / 'method_status.yaml'
     with open(yaml_path, 'r') as f:
         method_status = yaml.safe_load(f)
     return method_status

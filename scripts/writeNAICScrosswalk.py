@@ -77,7 +77,7 @@ def update_naics_crosswalk():
     # and add to naics list
     missing_naics_df_list = []
     # read in all the crosswalk csv files (ends in toNAICS.csv)
-    for file_name in glob.glob(f'{crosswalkpath}NAICS_Crosswalk_*.csv'):
+    for file_name in glob.glob(crosswalkpath / 'NAICS_Crosswalk_*.csv'):
         # skip Statistics Canada GDP because not all sectors relevant
         if not any(s in file_name for s in ('StatCan', 'BEA')):
             df = pd.read_csv(file_name, low_memory=False, dtype=str)
@@ -140,7 +140,7 @@ def update_naics_crosswalk():
                          'NAICS_2012_Code', 'NAICS_2017_Code']]
 
     # save as csv
-    naics_cw.to_csv(datapath + "NAICS_Crosswalk_TimeSeries.csv", index=False)
+    naics_cw.to_csv(datapath / "NAICS_Crosswalk_TimeSeries.csv", index=False)
 
 
 def merge_df_by_crosswalk_lengths(naics_cw, d, l):
@@ -234,12 +234,12 @@ def write_naics_2012_crosswalk():
     # reorder
     naics_cw = naics_cw.reindex(sorted(naics_cw.columns), axis=1)
     # save as csv
-    naics_cw.to_csv(datapath + "NAICS_2012_Crosswalk.csv", index=False)
+    naics_cw.to_csv(datapath / "NAICS_2012_Crosswalk.csv", index=False)
 
 
 def update_sector_name_df():
     """Update list of naics names with added sectors"""
-    sectors = pd.read_csv(f'{datapath}NAICS_2012_Names.csv', dtype=str)
+    sectors = pd.read_csv(datapath / 'NAICS_2012_Names.csv', dtype=str)
 
     # dictionary of new sector names
     new_sectors = pd.DataFrame(
@@ -257,7 +257,7 @@ def update_sector_name_df():
                              ]})
     df = pd.concat([sectors, new_sectors])
     df = df.sort_values("NAICS_2012_Code")
-    df.to_csv(f'{datapath}Sector_2012_Names.csv', index=False)
+    df.to_csv(datapath / 'Sector_2012_Names.csv', index=False)
 
 
 if __name__ == '__main__':

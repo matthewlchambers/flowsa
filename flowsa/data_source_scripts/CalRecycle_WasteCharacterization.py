@@ -10,7 +10,6 @@ The data  was manually scraped so no R/python code is available to replicate.
 Last updated:
 """
 
-import os
 import pandas as pd
 import numpy as np
 from flowsa.flowbyfunctions import assign_fips_location_system, \
@@ -85,13 +84,12 @@ def calR_parse(*, year, **_):
     data['DataReliability'] = 5  # tmp
     data['DataCollection'] = 5  # tmp
 
-    for entry in os.listdir(externaldatapath):
-        if os.path.isfile(os.path.join(externaldatapath, entry)):
-            if "California_Commercial_bySector_2014" in entry and \
-                    "Map" not in entry:
-                data["ActivityProducedBy"] = produced_by(entry)
-                dataframe = pd.read_csv(externaldatapath + "/" + entry,
-                                        header=0, dtype=str)
+    for entry in externaldatapath.iterdir():
+        if entry.is_file():
+            if ("California_Commercial_bySector_2014" in entry.name and 
+                    "Map" not in entry.name):
+                data["ActivityProducedBy"] = produced_by(entry.name)
+                dataframe = pd.read_csv(entry, header=0, dtype=str)
                 for col in dataframe.columns:
                     if "Percent" in str(col):
                         del dataframe[col]

@@ -222,4 +222,4 @@ if __name__ == '__main__':
         drop=True)
 
     # write fips crosswalk as csv
-    fips_xwalk.to_csv(datapath + "FIPS_Crosswalk.csv", index=False)
+    fips_xwalk.to_csv(datapath / "FIPS_Crosswalk.csv", index=False)

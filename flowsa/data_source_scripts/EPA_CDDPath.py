@@ -12,7 +12,6 @@ Last updated: 2018-11-07
 import pandas as pd
 from tabula.io import read_pdf
 import re
-import os
 from flowsa.location import US_FIPS
 from flowsa.settings import externaldatapath, log
 from flowsa.flowbyfunctions import assign_fips_location_system, aggregator
@@ -40,8 +39,8 @@ def call_cddpath_model(*, resp, year, config, **_):
         except KeyError:
             log.error('CDDPath filepath not provided in FBA method')
             raise
-        source_data = externaldatapath + file
-        if os.path.isfile(source_data):
+        source_data = externaldatapath / file
+        if source_data.is_file():
             log.info(f"Reading from local file {file}")
         else:
             log.error(f"{file} not found in external data directory. "
@@ -120,7 +119,7 @@ def combine_cdd_path(*, resp, year, config, **_):
     if df_csv is None:
         # if not available, default to 2014 ratios
         file = config['generation_by_source'].get('2014')
-        df_csv = pd.read_csv(externaldatapath + file, header=0,
+        df_csv = pd.read_csv(externaldatapath / file, header=0,
                              names=['FlowName', 'ActivityProducedBy',
                                     'FlowAmount'])
     df_csv['pct'] = (df_csv['FlowAmount']/
