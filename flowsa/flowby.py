@@ -1158,6 +1158,9 @@ class FlowByActivity(_FlowBy):
         else:
             log.info('Getting crosswalk between activities in %s and '
                      'NAICS codes.', self.full_name)
+            non_naics = self.config['industry_spec'].get('non_naics', [])
+            non_naics = non_naics if isinstance(non_naics, list) else [non_naics]
+
             activity_to_source_naics_crosswalk = (
                 sectormapping.get_activitytosector_mapping(
                     # ^^^ TODO: Replace or streamline get_...() function
@@ -1165,6 +1168,7 @@ class FlowByActivity(_FlowBy):
                      or self.source_name),
                     fbsconfigpath=external_config_path)
                 .astype('object')
+                .query('Activity not in @non_naics')
                 [['Activity', 'Sector', 'SectorType', 'SectorSourceName']]
             )
 
@@ -1183,11 +1187,18 @@ class FlowByActivity(_FlowBy):
                             '2012 being used as default.',
                             self.full_name)
 
-            activity_to_source_naics_crosswalk = (
+            activity_to_source_naics_crosswalk = pd.concat([
                 activity_to_source_naics_crosswalk
                 .query(f'SectorSourceName == "NAICS_{source_year}_Code"')
-                .reset_index(drop=True)
-            )
+                .reset_index(drop=True),
+                naics_key
+                .query('source_naics in @non_naics')
+                .assign(Activity=lambda x: x.source_naics,
+                        Sector=lambda x: x.target_naics,
+                        SectorType='',
+                        SectorSourceName='Non-NAICS')
+                .drop(columns=['source_naics', 'target_naics'])
+            ])
 
             log.info('Converting NAICS codes in crosswalk to desired '
                      'industry/sector aggregation structure.')
@@ -1800,19 +1811,43 @@ class FlowBySector(_FlowBy):
 
         return fbs
 
+    def sector_aggregation(self):
+        """
+        In the event activity sets in an FBS are at a less aggregated target
+        sector level than the overall target level, aggregate the sectors to
+        the FBS target scale
+        :return:
+        """
+        naics_key = naics.industry_spec_key(self.config['industry_spec'])
+
+        fbs = self
+        for direction in ['ProducedBy', 'ConsumedBy']:
+            fbs = (
+                fbs
+                .rename(columns={f'Sector{direction}': 'source_naics'})
+                .merge(naics_key,
+                       how='left')
+                .rename(columns={'target_naics': f'Sector{direction}'})
+                .drop(columns='source_naics')
+                .aggregate_flowby()
+            )
+
+        return fbs
+
     def prepare_fbs(self: 'FlowBySector') -> 'FlowBySector':
         return (
             self
             .function_socket('clean_fbs')
             .select_by_fields()
-            # TODO: Add a method to convert to proper industry spec.
+            .sector_aggregation()
             .convert_fips_to_geoscale()
             .aggregate_flowby()  # necessary after consolidating geoscale
         )
 
     def display_tables(
         self: 'FlowBySector',
-        display_tables: dict = None
+        display_tables: dict = None,
+        save: bool = True
     ) -> pd.DataFrame:
         display_tables = display_tables or self.config.get('display_tables')
         if display_tables is None:
@@ -1848,7 +1883,7 @@ class FlowBySector(_FlowBy):
             return fb_at_target_naics
 
         table_dict = {
-            table_name: (
+            table_name: pd.DataFrame(
                 self
                 .select_by_fields(table_config.get('selection_fields'))
                 .pipe(convert_industry_spec, table_config.get('industry_spec'))
@@ -1866,15 +1901,16 @@ class FlowBySector(_FlowBy):
             for table_name, table_config in display_tables.items()
         }
 
-        tables_path = (f'{settings.tableoutputpath}{self.full_name}'
-                       f'_Display_Tables.xlsx')
-        try:
-            with ExcelWriter(tables_path) as writer:
-                for name, table in table_dict.items():
-                    table.to_excel(writer, name)
-        except PermissionError:
-            log.warning(f'Permission to write display tables for '
-                        f'{self.full_name} to {tables_path} denied.')
+        if save:
+            tables_path = (f'{settings.tableoutputpath}{self.full_name}'
+                           f'_Display_Tables.xlsx')
+            try:
+                with ExcelWriter(tables_path) as writer:
+                    for name, table in table_dict.items():
+                        table.to_excel(writer, name)
+            except PermissionError:
+                log.warning(f'Permission to write display tables for '
+                            f'{self.full_name} to {tables_path} denied.')
 
         return table_dict
 
