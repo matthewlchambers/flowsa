@@ -13,7 +13,7 @@ import pandas as pd
 from flowsa.flowbyfunctions import assign_fips_location_system, \
     load_fba_w_standardized_units
 from flowsa.flowsa_log import log
-from flowsa.settings import externaldatapath
+from flowsa.settings import input_paths
 from flowsa.schema import flow_by_activity_fields
 from flowsa.flowbyactivity import FlowByActivity
 
@@ -122,8 +122,8 @@ def annex_yearly_tables(data, table=None):
     """Special handling of ANNEX Energy Tables"""
     df = pd.read_csv(data, skiprows=1, encoding="ISO-8859-1",
                      header=[0, 1], thousands=",")
-    if table == "A-4": 
-        # Table "Energy Consumption Data by Fuel Type (TBtu) and Adjusted 
+    if table == "A-4":
+        # Table "Energy Consumption Data by Fuel Type (TBtu) and Adjusted
         # Energy Consumption Data"
         # Extra row to drop in this table
         df = df.drop([0])
@@ -190,7 +190,7 @@ def ghg_call(*, resp, url, year, config, **_):
                         # Skip 3-22b for current year (use 3-22 instead)
                         continue
                     else:
-                        df = pd.read_csv(externaldatapath / f"GHGI_Table_{table}.csv",
+                        df = pd.read_csv(input_paths.external_data % f"GHGI_Table_{table}.csv",
                                          skiprows=2, encoding="ISO-8859-1", thousands=",")
                 else:
                     try:
@@ -198,7 +198,7 @@ def ghg_call(*, resp, url, year, config, **_):
                     except KeyError:
                         log.error(f"error reading {table}")
                         continue
-                
+
                 if table in ['3-10', '5-28', 'A-73', 'A-97']:
                     # Skip single row
                     df = pd.read_csv(data, skiprows=1, encoding="ISO-8859-1",
@@ -228,7 +228,7 @@ def ghg_call(*, resp, url, year, config, **_):
                 elif table in ANNEX_ENERGY_TABLES:
                     df = annex_yearly_tables(data, table)
                 elif table != '3-22b':
-                    # Except for 3-22b already as df, 
+                    # Except for 3-22b already as df,
                     # Proceed with default case
                     df = pd.read_csv(data, skiprows=2, encoding="ISO-8859-1",
                                      thousands=",")
@@ -486,7 +486,7 @@ def ghg_parse(*, df_list, year, config, **_):
         df["LocationSystem"] = 'None'
         df = assign_fips_location_system(df, str(year))
 
-        # Define special table lists from config      
+        # Define special table lists from config
         multi_chem_names = config.get('multi_chem_names')
         source_No_activity = config.get('source_No_activity')
         source_activity_1 = config.get('source_activity_1')

@@ -12,7 +12,7 @@ in scripts/write_BEA_Use_from_useeior.py
 
 import pandas as pd
 from flowsa.location import US_FIPS
-from flowsa.settings import externaldatapath
+from flowsa.settings import input_paths
 from flowsa.flowbyfunctions import assign_fips_location_system, aggregator
 
 def bea_parse(*, source, year, **_):
@@ -30,7 +30,7 @@ def bea_parse(*, source, year, **_):
     else:
         filename = source
 
-    df = pd.read_csv(externaldatapath / f"{filename}.csv")
+    df = pd.read_csv(input_paths.external_data % f"{filename}.csv")
 
     if 'BeforeRedef' in source:
         df = df.rename(columns={'Unnamed: 0': 'ActivityProducedBy'})
