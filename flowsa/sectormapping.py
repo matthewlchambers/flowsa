@@ -5,6 +5,7 @@
 Contains mapping functions
 """
 import os.path
+from pathlib import Path
 import pandas as pd
 import numpy as np
 from esupy.mapping import apply_flow_mapping
@@ -14,6 +15,8 @@ from flowsa.common import get_flowsa_base_name, load_crosswalk
 from flowsa.dataclean import standardize_units
 from flowsa.flowsa_log import log
 from flowsa.schema import dq_fields
+from flowsa.path_tools import PathList
+from flowsa.settings import input_paths
 
 
 def get_activitytosector_mapping(source, fbsconfigpath=None):
@@ -22,26 +25,11 @@ def get_activitytosector_mapping(source, fbsconfigpath=None):
     :param source: str, the data source name
     :return: a pandas df for a standard ActivitytoSector mapping
     """
-    from flowsa.settings import crosswalkpath
     # identify mapping file name
     mapfn = f'NAICS_Crosswalk_{source}'
 
-    # if FBS method file loaded from outside the flowsa directory, check if
-    # there is also a crosswalk
-    if fbsconfigpath is not None:
-        external_mappingpath = (f"{os.path.dirname(fbsconfigpath)}"
-                                "/activitytosectormapping/")
-        if os.path.exists(external_mappingpath):
-            activity_mapping_source_name = get_flowsa_base_name(
-                external_mappingpath, mapfn, 'csv')
-            if os.path.isfile(f"{external_mappingpath}"
-                              f"{activity_mapping_source_name}.csv"):
-                log.info(f"Loading {activity_mapping_source_name}.csv "
-                         f"from {external_mappingpath}")
-                crosswalkpath = external_mappingpath
-    activity_mapping_source_name = get_flowsa_base_name(
-        crosswalkpath, mapfn, 'csv')
-    mapping = pd.read_csv(crosswalkpath / f'{activity_mapping_source_name}.csv',
+    crosswalk_name = get_flowsa_base_name(input_paths.crosswalks, mapfn, 'csv')
+    mapping = pd.read_csv(input_paths.crosswalks % f'{crosswalk_name}.csv',
                           dtype={'Activity': 'str', 'Sector': 'str'})
     # some mapping tables will have data for multiple sources, while other
     # mapping tables are used for multiple sources (like EPA_NEI or BEA
@@ -170,8 +158,6 @@ def map_to_BEA_sectors(fbs_load, region, io_level, year):
     :param io_level: str, 'summary' or 'detail'
     :param year: year for industry output
     """
-    from flowsa.sectormapping import get_activitytosector_mapping
-
     bea = get_BEA_industry_output(region, io_level, year)
 
     if io_level == 'summary':

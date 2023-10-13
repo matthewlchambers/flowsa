@@ -3,10 +3,11 @@ import pandas as pd
 import numpy as np
 from flowsa.flowbyfunctions import aggregator
 from flowsa.flowsa_log import vlog, log
-from . import (common, settings)
+from flowsa import common
+from flowsa.settings import input_paths
 
 naics_crosswalk = pd.read_csv(
-    settings.datapath / 'NAICS_2012_Crosswalk.csv', dtype='object'
+    input_paths.data % 'NAICS_2012_Crosswalk.csv', dtype='object'
 )
 
 
@@ -210,7 +211,7 @@ def year_crosswalk(
         corresponding to NAICS codes for the source and target specifications.
     '''
     return (
-        pd.read_csv(settings.datapath / 'NAICS_Crosswalk_TimeSeries.csv',
+        pd.read_csv(input_paths.data % 'NAICS_Crosswalk_TimeSeries.csv',
                     dtype='object')
         .assign(source_naics=lambda x: x[f'NAICS_{source_year}_Code'],
                 target_naics=lambda x: x[f'NAICS_{target_year}_Code'])

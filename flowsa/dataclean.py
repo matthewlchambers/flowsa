@@ -87,7 +87,7 @@ def standardize_units(df):
     )
 
     conversion_table = pd.concat([
-        pd.read_csv(settings.datapath / 'unit_conversion.csv'),
+        pd.read_csv(settings.input_paths.data % 'unit_conversion.csv'),
         pd.Series({'old_unit': 'Canadian Dollar',
                    'new_unit': 'USD',
                    'conversion_factor': 1 / exchange_rate}).to_frame().T
@@ -113,4 +113,3 @@ def standardize_units(df):
                                f'standardize_units(): {unstandardized_units}.')
 
     return standardized
-

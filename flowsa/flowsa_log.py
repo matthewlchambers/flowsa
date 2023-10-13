@@ -2,7 +2,7 @@ import logging
 import shutil
 import sys
 from esupy.processed_data_mgmt import mkdir_if_missing
-from .settings import logoutputpath
+from flowsa.settings import output_paths
 
 try:
     from colorama import init, Fore, Style
@@ -50,7 +50,7 @@ file_formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s',
 
 def get_log_file_handler(name, level=logging.DEBUG):
     h = logging.FileHandler(
-        logoutputpath / name,
+        output_paths.log / name,
         mode='w', encoding='utf-8')
     h.setLevel(level)
     h.setFormatter(file_formatter)
@@ -81,14 +81,14 @@ def reset_log_file(filename, fb_meta):
     :param fb_meta: metadata for parquet
     """
     # original log file name - all log statements
-    log_file = logoutputpath / "flowsa.log"
+    log_file = output_paths.log / "flowsa.log"
     # generate new log name
-    new_log_name = (logoutputpath / f'{filename}_v'
+    new_log_name = (output_paths.log / f'{filename}_v'
                     f'{fb_meta.tool_version}'
                     f'{"_" + fb_meta.git_hash if fb_meta.git_hash else ""}'
                     f'.log')
     # create log directory if missing
-    mkdir_if_missing(logoutputpath)
+    mkdir_if_missing(output_paths.log)
     # rename the standard log file name (os.rename throws error if file
     # already exists)
     shutil.copy(log_file, new_log_name)
@@ -103,9 +103,9 @@ def reset_log_file(filename, fb_meta):
         return
 
     # original log file name - validation
-    log_file = logoutputpath / "flowsa_validation.log"
+    log_file = output_paths.log / "flowsa_validation.log"
     # generate new log name
-    new_log_name = (logoutputpath / f'{filename}_v'
+    new_log_name = (output_paths.log / f'{filename}_v'
                     f'{fb_meta.tool_version}'
                     f'{"_" + fb_meta.git_hash if fb_meta.git_hash else ""}'
                     f'_validation.log')

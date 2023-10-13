@@ -8,8 +8,8 @@ import pandas as pd
 import numpy as np
 from functools import partial, reduce
 from copy import deepcopy
-from flowsa import (settings, literature_values, flowsa_yaml, geo, schema,
-                    naics)
+from flowsa import literature_values, flowsa_yaml, geo, schema, naics, path_tools
+from flowsa.settings import input_paths
 from flowsa.common import get_catalog_info
 from flowsa.flowsa_log import log, vlog
 import esupy.processed_data_mgmt
@@ -25,7 +25,7 @@ NAME_SEP_CHAR = '.'
 # ^^^ Used to separate source/activity set names as part of 'full_name' attr
 
 
-with open(settings.datapath / 'flowby_config.yaml') as f:
+with open(input_paths.data % 'flowby_config.yaml') as f:
     flowby_config = flowsa_yaml.load(f)
     # ^^^ Replaces schema.py
 
@@ -227,7 +227,7 @@ class _FlowBy(pd.DataFrame):
         config: dict = None,
         external_data_path: str = None
     ) -> '_FlowBy':
-        paths = deepcopy(settings.paths)
+        paths = deepcopy(path_tools.esupy_paths)
         paths.local_path = external_data_path or paths.local_path
 
         attempt_list = (['import local', 'download', 'generate']
@@ -281,7 +281,7 @@ class _FlowBy(pd.DataFrame):
         )
 
         conversion_table = pd.concat([
-            pd.read_csv(settings.datapath / 'unit_conversion.csv'),
+            pd.read_csv(input_paths.data % 'unit_conversion.csv'),
             pd.Series({'old_unit': 'Canadian Dollar',
                        'new_unit': 'USD',
                        'conversion_factor': 1 / exchange_rate}).to_frame().T

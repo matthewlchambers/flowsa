@@ -11,8 +11,9 @@ from esupy.processed_data_mgmt import FileMeta, write_metadata_to_file, \
     read_source_metadata
 from flowsa.common import return_true_source_catalog_name, get_catalog_info
 from flowsa.flowsa_log import log
-from flowsa.settings import paths, PKG, PKG_VERSION_NUMBER, WRITE_FORMAT, \
+from flowsa.settings import PKG, PKG_VERSION_NUMBER, WRITE_FORMAT, \
     GIT_HASH, GIT_HASH_LONG
+from flowsa import path_tools
 
 
 def set_fb_meta(name_data, category):
@@ -48,7 +49,7 @@ def write_metadata(source_name, config, fb_meta, category, **kwargs):
 
     fb_meta.tool_meta = return_fb_meta_data(
         source_name, config, category, **kwargs)
-    write_metadata_to_file(paths, fb_meta)
+    write_metadata_to_file(path_tools.esupy_paths, fb_meta)
 
 
 def return_fb_meta_data(source_name, config, category, **kwargs):
@@ -223,7 +224,7 @@ def getMetadata(source, year=None, category=None):
         year=None
 
     name = set_fba_name(source, year)
-    meta = read_source_metadata(paths, set_fb_meta(name, category))
+    meta = read_source_metadata(path_tools.esupy_paths, set_fb_meta(name, category))
     if meta is None:
         log.warning('No metadata found for %s', source)
         meta = {'source_meta': f'No metadata found for {name}'}

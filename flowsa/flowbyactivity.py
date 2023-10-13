@@ -22,12 +22,12 @@ import flowsa.exceptions
 from flowsa import settings, metadata, geo, validation, naics, common, \
     sectormapping, generateflowbyactivity
 from flowsa.flowsa_log import log
-from flowsa.settings import DEFAULT_DOWNLOAD_IF_MISSING
 from flowsa.flowbyfunctions import filter_by_geoscale
 from flowsa.flowby import _FlowBy, flowby_config, NAME_SEP_CHAR
 
 if TYPE_CHECKING:
     from flowsa.flowbysector import FlowBySector
+
 
 class FlowByActivity(_FlowBy):
     _metadata = [*_FlowBy()._metadata]
@@ -112,7 +112,7 @@ class FlowByActivity(_FlowBy):
             file_metadata=file_metadata,
             download_ok=download_ok,
             flowby_generator=flowby_generator,
-            output_path=settings.fbaoutputpath,
+            output_path=settings.output_paths.fba,
             full_name=full_name,
             config=config,
             **kwargs
@@ -815,7 +815,7 @@ class FlowByActivity(_FlowBy):
         '''
         emissions_factors = (
             pd.read_csv(
-                settings.datapath / f'{self.config["emissions_factors"]}.csv')
+                settings.input_paths.data % f'{self.config["emissions_factors"]}.csv')
             .drop(columns='source')
         )
 
@@ -863,7 +863,7 @@ def getFlowByActivity(
         year,
         flowclass=None,
         geographic_level=None,
-        download_FBA_if_missing=DEFAULT_DOWNLOAD_IF_MISSING
+        download_FBA_if_missing=settings.DEFAULT_DOWNLOAD_IF_MISSING
         ) -> pd.DataFrame:
     """
     Retrieves stored data in the FlowByActivity format

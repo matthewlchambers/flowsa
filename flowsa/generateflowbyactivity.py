@@ -14,9 +14,9 @@ from urllib import parse
 import flowsa
 from esupy.processed_data_mgmt import write_df_to_file
 from esupy.remote import make_url_request
-from flowsa.common import load_env_file_key, sourceconfigpath, \
-    load_yaml_dict, get_flowsa_base_name
-from flowsa.settings import paths
+from flowsa.common import load_env_file_key, load_yaml_dict, get_flowsa_base_name
+from flowsa.settings import input_paths
+from flowsa.path_tools import esupy_paths
 from flowsa.flowsa_log import log, reset_log_file
 from flowsa.metadata import set_fb_meta, write_metadata
 from flowsa.schema import flow_by_activity_fields
@@ -115,7 +115,7 @@ def call_urls(*, url_list, source, year, config):
             fxn = config.get("call_response_fxn")
             if callable(fxn):
                 df = fxn(resp=resp, source=source, year=year,
-                        config=config, url=url)
+                         config=config, url=url)
             elif fxn:
                 raise flowsa.exceptions.FBSMethodConstructionError(
                     error_type='fxn_call')
@@ -174,7 +174,7 @@ def process_data_frame(*, df, source, year, config):
     # save as parquet file
     name_data = set_fba_name(source, year)
     meta = set_fb_meta(name_data, "FlowByActivity")
-    write_df_to_file(flow_df, paths, meta)
+    write_df_to_file(flow_df, esupy_paths, meta)
     write_metadata(source, config, meta, "FlowByActivity", year=year)
     log.info("FBA generated and saved for %s", name_data)
     # rename the log file saved to local directory
@@ -200,7 +200,7 @@ def main(**kwargs):
         config = load_yaml_dict(source, flowbytype='FBA')
     except FileNotFoundError:
         log.info(f'Could not find Flow-By-Activity config file for {source}')
-        source = get_flowsa_base_name(sourceconfigpath, source, "yaml")
+        source = get_flowsa_base_name(input_paths.fba_methods, source, "yaml")
         log.info(f'Generating FBA for {source}')
         config = load_yaml_dict(source, flowbytype='FBA')
 

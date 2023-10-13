@@ -18,7 +18,7 @@ from flowsa.common import load_crosswalk
 #  currently working
 # from flowsa.flowbyfunctions import sector_aggregation
 from flowsa.flowsa_log import log
-from flowsa.settings import datapath, plotoutputpath
+from flowsa.settings import input_paths, output_paths
 import textwrap
 
 
@@ -284,7 +284,7 @@ def stackedBarChart(df,
     # create list of n colors based on number of allocation sources
     colors = df2[[stacking_col]].drop_duplicates()
     # add colors
-    vis = pd.read_csv(datapath / 'VisualizationEssentials.csv').rename(
+    vis = pd.read_csv(input_paths.data % 'VisualizationEssentials.csv').rename(
         columns={'AttributionSource': stacking_col})
     colors = colors.merge(vis[[stacking_col, 'Color']], how='left')
 
@@ -358,8 +358,8 @@ def stackedBarChart(df,
         if (trace.name in names) else names.add(trace.name))
 
     fig.show()
-    log.info(f'Saving file to {plotoutputpath / filename}.svg')
-    fig.write_image(plotoutputpath / f"{filename}.svg", width=graphic_width,
+    log.info(f'Saving file to {output_paths.plot / filename}.svg')
+    fig.write_image(output_paths.plot / f'{filename}.svg', width=graphic_width,
                     height=graphic_height)
 
 

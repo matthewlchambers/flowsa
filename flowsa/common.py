@@ -19,8 +19,8 @@ from flowsa.schema import flow_by_activity_fields, flow_by_sector_fields, \
     flow_by_sector_collapsed_fields, flow_by_activity_mapped_fields, \
     flow_by_activity_wsec_fields, flow_by_activity_mapped_wsec_fields, \
     activity_fields
-from flowsa.settings import datapath, MODULEPATH, \
-    sourceconfigpath, flowbysectormethodpath, methodpath
+from flowsa.settings import input_paths
+from flowsa.path_tools import MODULE_PATH, PathList
 
 
 # Sets default Sector Source Name
@@ -55,12 +55,12 @@ def load_env_file_key(env_file, key):
     :return: str, value of the key stored in the env
     """
     if env_file == 'API_Key':
-        load_dotenv(f'{MODULEPATH}/API_Keys.env', verbose=True)
+        load_dotenv(f'{MODULE_PATH}/API_Keys.env', verbose=True)
         value = os.getenv(key)
         if value is None:
             raise flowsa.exceptions.APIError(api_source=key)
     else:
-        load_dotenv(f'{MODULEPATH}/external_paths.env', verbose=True)
+        load_dotenv(f'{MODULE_PATH}/external_paths.env', verbose=True)
         value = os.getenv(key)
         if value is None:
             raise flowsa.exceptions.EnvError(key=key)
@@ -83,7 +83,7 @@ def load_crosswalk(crosswalk_name):
 
     fn = cw_dict.get(crosswalk_name)
 
-    cw = pd.read_csv(datapath / f'{fn}.csv', dtype="str")
+    cw = pd.read_csv(input_paths.data % f'{fn}.csv', dtype="str")
     return cw
 
 
@@ -129,39 +129,33 @@ def load_yaml_dict(filename, flowbytype=None, filepath=None):
     pattern = '_v[0-9].*'
     if re.search(pattern, filename):
         log.warning('Filename includes a github version and githash. Dropping '
-                 'the version and hash to load most up-to-date yaml config '
-                 'file. The yaml config file might not reflect the yaml used '
-                 'to generate the dataframe')
-        filename = re.sub(pattern,'', filename)
+                    'the version and hash to load most up-to-date yaml config '
+                    'file. The yaml config file might not reflect the yaml used '
+                    'to generate the dataframe')
+        filename = re.sub(pattern, '', filename)
 
-    if filename in ['source_catalog']:
-        folder = datapath
+    if flowbytype == 'FBA':
+        search_path = PathList(filepath) + input_paths.fba_methods
+    elif flowbytype == 'FBS':
+        search_path = PathList(filepath) + input_paths.fbs_methods
     else:
-        # first check if a filepath for the yaml is specified, as is the
-        # case with FBS method files located outside FLOWSA
-        # if filepath is not None:
-        if path.exists(path.join(str(filepath), f'{filename}.yaml')):
-            log.info(f'Loading {filename} from {filepath}')
-            folder = filepath
-        else:
-            if filepath is not None:
-                log.warning(f'{filename} not found in {filepath}. '
-                            f'Checking default folders')
-            if flowbytype == 'FBA':
-                folder = sourceconfigpath
-            elif flowbytype == 'FBS':
-                folder = flowbysectormethodpath
-            else:
-                raise KeyError('Must specify either \'FBA\' or \'FBS\'')
-    yaml_path = f'{folder}/{filename}.yaml'
+        search_path = PathList(filepath) + input_paths.data
 
-    try:
-        with open(yaml_path, 'r', encoding='utf-8') as f:
-            config = flowsa_yaml.load(f, filepath)
-    except FileNotFoundError:
-        raise flowsa.exceptions.FlowsaMethodNotFoundError(
-            method_type=flowbytype, method=filename)
-    return config
+    yaml_path = search_path % f'{filename}.yaml'
+
+    if yaml_path is None:
+        log.warning(f'{filename} not found in {search_path}. If {filename} is '
+                    f'an FBS or FBA method file, ensure the appropriate'
+                    f'flowbytype is specified.')
+        if flowbytype:
+            raise flowsa.exceptions.FlowsaMethodNotFoundError(
+                method_type=flowbytype, method=filename)
+        else:
+            raise FileNotFoundError
+
+    with open(yaml_path, 'r', encoding='utf-8') as f:
+        log.info(f'Loading {filename} from {yaml_path}')
+        return flowsa_yaml.load(f, filepath)
 
 
 def load_values_from_literature_citations_config():
@@ -170,7 +164,7 @@ def load_values_from_literature_citations_config():
     values from the literature come from
     :return: dictionary of the values from the literature information
     """
-    sfile = (datapath / 'bibliographyinfo' /
+    sfile = (input_paths.data / 'bibliographyinfo' %
              'values_from_literature_source_citations.yaml')
     with open(sfile, 'r') as f:
         config = yaml.safe_load(f)
@@ -261,13 +255,15 @@ def capitalize_first_letter(string):
     return return_string.strip()
 
 
-def get_flowsa_base_name(filedirectory, filename, extension):
+def get_flowsa_base_name(
+    folders: PathList, filename: str, extension: str
+) -> str:
     """
     If filename does not match filename within flowsa due to added extensions
     onto the filename, cycle through
     name, dropping strings after each underscore until the name is found
-    :param filedirectory: Path object, path to directory
-    :param filename: string, name of original file searching for
+    :param folders: PathList object, paths to search for file
+    :param filename: string, original filename guess
     :param extension: string, type of file, such as "yaml" or "py"
     :return: string, corrected file path name
     """
@@ -275,7 +271,7 @@ def get_flowsa_base_name(filedirectory, filename, extension):
     # underscore. Repeat this process until the file name exists or no
     # underscores are left.
     while '_' in filename:
-        if (filedirectory / f"{filename}.{extension}").is_file():
+        if folders % f'{filename}.{extension}':
             break
         filename, _ = filename.rsplit('_', 1)
 
@@ -308,7 +304,7 @@ def str2bool(v):
 
 def check_method_status():
     """Read the current method status"""
-    yaml_path = methodpath / 'method_status.yaml'
+    yaml_path = input_paths.methods % 'method_status.yaml'
     with open(yaml_path, 'r') as f:
         method_status = yaml.safe_load(f)
     return method_status
@@ -334,14 +330,13 @@ def seeAvailableFlowByModels(flowbytype, print_method=True):
 
     # fb directory contents dependent on FBA or FBS
     if flowbytype == 'FBA':
-        fb_dir = os.listdir(sourceconfigpath)
+        fb_dir = input_paths.fba_methods
     elif flowbytype == 'FBS':
-        fb_dir = os.listdir(flowbysectormethodpath)
+        fb_dir = input_paths.fbs_methods
     else:
         raise ValueError("flowbytype must be 'FBA' or 'FBS'")
 
-    # list of file names (drop extension) for yaml files in flow directory
-    fb_names = [os.path.splitext(f)[0] for f in fb_dir if f.endswith('.yaml')]
+    fb_names = [p.stem for f in fb_dir for p in f.iterdir() if p.suffix == '.yaml']
 
     # further reduce list of file names by excluding common and summary_target
     exclude = ["_common", "_summary_target"]

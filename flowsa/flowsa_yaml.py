@@ -1,7 +1,9 @@
 from typing import IO, Callable
 import yaml
-import flowsa.settings
+from flowsa.settings import input_paths
+from flowsa.path_tools import PathList
 from os import path
+import sys
 import csv
 import importlib
 
@@ -18,23 +20,19 @@ class FlowsaLoader(yaml.SafeLoader):
         self.add_multi_constructor('!script_function:', self.script_function)
         self.add_multi_constructor('!clean_function:', self.clean_function)
         self.add_constructor('!external_config', self.external_config)
-        self.external_paths_to_search = []
+        self.external_paths_to_search = PathList()
         self.external_path_to_pass = None
 
     @staticmethod
     def include(loader: 'FlowsaLoader', suffix: str, node: yaml.Node) -> dict:
         file, *keys = suffix.split(':')
+        search_path = (loader.external_paths_to_search
+                       + input_paths.fba_methods
+                       + input_paths.fbs_methods
+                       + input_paths.data)
+        file = search_path % file
 
-        for folder in [
-            *loader.external_paths_to_search,
-            flowsa.settings.sourceconfigpath,
-            flowsa.settings.flowbysectormethodpath,
-            flowsa.settings.datapath
-        ]:
-            if path.exists(path.join(folder, file)):
-                file = path.join(folder, file)
-                break
-        else:
+        if file is None:
             raise FileNotFoundError(f'{file} not found')
 
         with open(file) as f:
@@ -83,15 +81,9 @@ class FlowsaLoader(yaml.SafeLoader):
     ) -> list:
         if not isinstance(node, yaml.ScalarNode):
             raise TypeError('Can only tag a scalar node with !from_index:')
-
-        for folder in [
-            *loader.external_paths_to_search,
-            flowsa.settings.flowbysectoractivitysetspath
-        ]:
-            if path.exists(path.join(folder, file)):
-                file = path.join(folder, file)
-                break
-        else:
+        search_path = loader.external_paths_to_search + input_paths.activity_sets
+        file = search_path % file
+        if file is None:
             raise FileNotFoundError(f'{file} not found')
 
         activity_set = loader.construct_scalar(node)
@@ -112,13 +104,14 @@ class FlowsaLoader(yaml.SafeLoader):
         if not isinstance(node, yaml.ScalarNode):
             raise TypeError('Can only tag scalar node with !script_function:')
 
-        # For security, this constructor does NOT search external config paths.
+        # For security, this constructor ONLY searches data_source_scripts
+        # paths from flowsa.settings.input_paths
         # If someone who understands security concerns better than I do feels
         # it is safe to change this behavior, then go ahead.
-        module = importlib.import_module(f'flowsa.data_source_scripts'
-                                         f'.{module_name}')
+        sys.path.extend(str(p) for p in input_paths.data_source_scripts
+                        if str(p) not in sys.path)
+        module = importlib.import_module(module_name)
         return getattr(module, loader.construct_scalar(node))
-
 
     @staticmethod
     def clean_function(
@@ -145,6 +138,8 @@ def load(stream: IO, external_path: str = None) -> dict:
         loader.external_paths_to_search.append(
             path.dirname(external_path))
         loader.external_path_to_pass = external_path
+        # TODO: With improved handling of paths in flowsa.settings, this should
+        #       posibly be considered unnecessary
     try:
         return loader.get_single_data()
     finally:

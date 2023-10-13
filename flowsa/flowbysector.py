@@ -11,11 +11,10 @@ from __future__ import annotations
 import esupy.processed_data_mgmt
 import pandas as pd
 from pandas import ExcelWriter
-from flowsa import settings, metadata, common, exceptions, geo, naics
+from flowsa import settings, metadata, common, exceptions, geo, naics, path_tools
 from flowsa.common import get_catalog_info
 from flowsa.flowby import _FlowBy, flowby_config, get_flowby_from_config
 from flowsa.flowbyfunctions import collapse_fbs_sectors
-from flowsa.settings import DEFAULT_DOWNLOAD_IF_MISSING
 from flowsa.flowsa_log import reset_log_file, log
 
 
@@ -107,7 +106,7 @@ class FlowBySector(_FlowBy):
             file_metadata=file_metadata,
             download_ok=download_fbs_ok,
             flowby_generator=flowby_generator,
-            output_path=settings.fbsoutputpath,
+            output_path=settings.output_paths.fbs,
             full_name=method,
             config=config,
             **kwargs
@@ -204,7 +203,7 @@ class FlowBySector(_FlowBy):
         # Save fbs and metadata
         log.info(f'FBS generation complete, saving {method} to file')
         meta = metadata.set_fb_meta(method, 'FlowBySector')
-        esupy.processed_data_mgmt.write_df_to_file(fbs, settings.paths, meta)
+        esupy.processed_data_mgmt.write_df_to_file(fbs, path_tools.esupy_paths, meta)
         reset_log_file(method, meta)
         metadata.write_metadata(source_name=method,
                                 config=common.load_yaml_dict(
@@ -329,7 +328,7 @@ class FlowBySector(_FlowBy):
             for table_name, table_config in display_tables.items()
         }
 
-        tables_path = (settings.tableoutputpath / f'{self.full_name}'
+        tables_path = (settings.output_paths.table / f'{self.full_name}'
                        f'_Display_Tables.xlsx')
         try:
             with ExcelWriter(tables_path) as writer:
@@ -365,8 +364,8 @@ class _FBSSeries(pd.Series):
 def getFlowBySector(
         methodname,
         fbsconfigpath=None,
-        download_FBAs_if_missing=DEFAULT_DOWNLOAD_IF_MISSING,
-        download_FBS_if_missing=DEFAULT_DOWNLOAD_IF_MISSING,
+        download_FBAs_if_missing=settings.DEFAULT_DOWNLOAD_IF_MISSING,
+        download_FBS_if_missing=settings.DEFAULT_DOWNLOAD_IF_MISSING,
         **kwargs
         ) -> pd.DataFrame:
     """
@@ -395,8 +394,8 @@ def getFlowBySector(
 def collapse_FlowBySector(
         methodname,
         fbsconfigpath=None,
-        download_FBAs_if_missing=DEFAULT_DOWNLOAD_IF_MISSING,
-        download_FBS_if_missing=DEFAULT_DOWNLOAD_IF_MISSING
+        download_FBAs_if_missing=settings.DEFAULT_DOWNLOAD_IF_MISSING,
+        download_FBS_if_missing=settings.DEFAULT_DOWNLOAD_IF_MISSING
         ) -> pd.DataFrame:
     """
     Returns fbs with one sector column in place of two

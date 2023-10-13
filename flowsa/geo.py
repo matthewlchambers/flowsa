@@ -2,7 +2,7 @@ from typing import Literal
 import enum
 from functools import total_ordering
 import pandas as pd
-from . import settings
+from flowsa.settings import input_paths
 from .flowsa_log import log
 
 
@@ -71,7 +71,7 @@ def get_all_fips(year: Literal[2010, 2013, 2015] = 2015) -> pd.DataFrame:
         is Nan for national and each state level FIPS.
     '''
     return (pd
-            .read_csv(settings.datapath / 'FIPS_Crosswalk.csv',
+            .read_csv(input_paths.data % 'FIPS_Crosswalk.csv',
                       header=0, dtype=object)
             [['State', f'FIPS_{year}', f'County_{year}']]
             .rename(columns={f'FIPS_{year}': 'FIPS',
@@ -84,7 +84,7 @@ def filtered_fips(
         geoscale: Literal['national', 'state', 'county',
                           scale.NATIONAL, scale.STATE, scale.COUNTY],
         year: Literal[2010, 2013, 2015] = 2015
-    ) -> pd.DataFrame:
+) -> pd.DataFrame:
     if geoscale == 'national' or geoscale == scale.NATIONAL:
         return (get_all_fips(year).query('State.isnull()'))
     elif geoscale == 'state' or geoscale == scale.STATE:

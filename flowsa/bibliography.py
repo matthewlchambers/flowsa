@@ -9,12 +9,11 @@ Functions to generate .bib file for a FlowBySector method
 import pandas as pd
 from bibtexparser.bwriter import BibTexWriter
 from bibtexparser.bibdatabase import BibDatabase
-from esupy.processed_data_mgmt import mkdir_if_missing
 
 from flowsa.common import load_values_from_literature_citations_config, \
-    get_flowsa_base_name, sourceconfigpath, load_yaml_dict
+    get_flowsa_base_name, load_yaml_dict
 from flowsa.flowsa_log import log
-from flowsa.settings import outputpath, biboutputpath
+from flowsa.settings import input_paths, output_paths
 
 
 def generate_list_of_sources_in_fbs_method(methodname):
@@ -66,7 +65,7 @@ def load_source_dict(sourcename):
     except KeyError:
         # else check if file exists, then try loading
         # citation information from source yaml
-        sourcename = get_flowsa_base_name(sourceconfigpath, sourcename, "yaml")
+        sourcename = get_flowsa_base_name(input_paths.fba_methods, sourcename, "yaml")
         config = load_yaml_dict(sourcename, flowbytype='FBA')
 
     return config
