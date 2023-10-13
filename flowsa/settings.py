@@ -1,47 +1,44 @@
-import os
+from . import path_tools
 import subprocess
+import os
 from importlib.metadata import version
-from pathlib import Path
-from esupy.processed_data_mgmt import Paths, mkdir_if_missing
 from esupy.util import get_git_hash
 
+# Set default paths for inputs and outputs
+input_paths = path_tools.InputPaths()
 
-MODULEPATH = Path(__file__).resolve().parent
+input_paths.data = path_tools.MODULE_PATH / 'data'
+input_paths.crosswalks = input_paths.data / 'activitytosectormapping'
+input_paths.external_data = input_paths.data / 'external_data'
+input_paths.process_adjustments = input_paths.data / 'process_adjustments'
 
-datapath = MODULEPATH / 'data'
-crosswalkpath = datapath / 'activitytosectormapping'
-externaldatapath = datapath / 'external_data'
-process_adjustmentpath = datapath / 'process_adjustments'
+input_paths.methods = path_tools.MODULE_PATH / 'methods'
+input_paths.fba_methods = input_paths.methods / 'flowbyactivitymethods'
+input_paths.fbs_methods = input_paths.methods / 'flowbysectormethods'
+input_paths.activity_sets = input_paths.methods / 'flowbysectoractivitysets'
 
-methodpath = MODULEPATH / 'methods'
-sourceconfigpath = methodpath / 'flowbyactivitymethods'
-flowbysectormethodpath = methodpath / 'flowbysectormethods'
-flowbysectoractivitysetspath = methodpath / 'flowbysectoractivitysets'
+input_paths.data_source_scripts = path_tools.MODULE_PATH / 'data_source_scripts'
 
-datasourcescriptspath = MODULEPATH / 'data_source_scripts'
+input_paths.scripts = path_tools.MODULE_PATH.parent / 'scripts'
+input_paths.script_fbas = input_paths.scripts / 'FlowByActivity_Datasets'
 
-# "Paths()" are a class defined in esupy
-paths = Paths()
-paths.local_path = paths.local_path / 'flowsa'
-outputpath = paths.local_path
-fbaoutputpath = outputpath / 'FlowByActivity'
-fbsoutputpath = outputpath / 'FlowBySector'
-biboutputpath = outputpath / 'Bibliography'
-logoutputpath = outputpath / 'Log'
-diffpath = outputpath / 'FBSComparisons'
-plotoutputpath = outputpath / 'Plots'
-tableoutputpath = outputpath / 'DisplayTables'
+input_paths.fba = path_tools.LOCAL_PATH / 'FlowByActivity'
+input_paths.fbs = path_tools.LOCAL_PATH / 'FlowBySector'
 
-# ensure directories exist
-mkdir_if_missing(logoutputpath)
-mkdir_if_missing(plotoutputpath)
-mkdir_if_missing(tableoutputpath)
+output_paths = path_tools.OutputPaths()
+
+output_paths.base = path_tools.LOCAL_PATH
+output_paths.fba = output_paths.base / 'FlowByActivity'
+output_paths.fbs = output_paths.base / 'FlowBySector'
+output_paths.bibliography = output_paths.base / 'Bibliography'
+output_paths.log = output_paths.base / 'Log'
+output_paths.comparison = output_paths.base / 'FBSComparisons'
+output_paths.plot = output_paths.base / 'Plots'
+output_paths.table = output_paths.base / 'DisplayTables'
+
+output_paths.create_missing()
 
 DEFAULT_DOWNLOAD_IF_MISSING = False
-
-# paths to scripts
-scriptpath = MODULEPATH.parent / 'scripts'
-scriptsFBApath = scriptpath / 'FlowByActivity_Datasets'
 
 
 def return_pkg_version():
@@ -51,7 +48,7 @@ def return_pkg_version():
         # outside the flowsa repo
         tags = subprocess.check_output(
             ["git", "describe", "--tags", "--always"],
-            cwd=MODULEPATH).decode().strip()
+            cwd=path_tools.MODULE_PATH).decode().strip()
         pkg_version = tags.split("-", 1)[0].replace('v', "")
     except subprocess.CalledProcessError:
         pkg_version = version('flowsa')
