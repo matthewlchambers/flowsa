@@ -20,7 +20,7 @@ from flowsa.flowbyactivity import FlowByActivity
 from flowsa.flowbyfunctions import assign_fips_location_system
 from flowsa.flowsa_log import log
 from flowsa.location import apply_county_FIPS, update_geoscale
-from flowsa.settings import process_adjustmentpath
+from flowsa.settings import input_paths
 from flowsa.naics import convert_naics_year
 import stewicombo
 import stewi
@@ -159,7 +159,7 @@ def reassign_process_to_sectors(df, year, file_list, external_config_path):
     """
     df_adj = pd.DataFrame()
     for file in file_list:
-        fpath = process_adjustmentpath / f"{file}.csv"
+        fpath = input_paths.process_adjustments % f"{file}.csv"
         if external_config_path:
             f_out_path = f"{external_config_path}process_adjustments/{file}.csv"
             if os.path.isfile(f_out_path):
