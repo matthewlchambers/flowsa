@@ -133,7 +133,7 @@ def return_fbs_method_data(source_name, config):
             if attr_dict:
                 # append fba meta
                 try:
-                    source = list(attr_dict.keys())[0]
+                    source = list(attr_dict)[0]
                     # Check first for cached source
                     if source in config.get('sources_to_cache', ()):
                         year = (config.get('sources_to_cache')
@@ -145,7 +145,7 @@ def return_fbs_method_data(source_name, config):
                 except AttributeError:
                     source = attr_dict
                     year = None
-                if source in attr_source_meta.keys():
+                if source in attr_source_meta:
                     continue
                 cat = (get_catalog_info(source)['data_format']
                        .replace('FBS', 'FlowBySector')

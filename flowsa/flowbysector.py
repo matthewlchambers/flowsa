@@ -151,7 +151,7 @@ class FlowBySector(_FlowBy):
                     name=source_name,
                     config={
                         **method_config,
-                        'method_config_keys': method_config.keys(),
+                        'method_config_keys': list(method_config),
                         **get_catalog_info(source_name),
                         **config
                     },
@@ -172,7 +172,7 @@ class FlowBySector(_FlowBy):
                 name=source_name,
                 config={
                     **method_config,
-                    'method_config_keys': method_config.keys(),
+                    'method_config_keys': list(method_config),
                     **get_catalog_info(source_name),
                     **config
                 },
