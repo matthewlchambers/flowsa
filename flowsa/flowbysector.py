@@ -16,6 +16,7 @@ from flowsa.common import get_catalog_info
 from flowsa.flowby import _FlowBy, flowby_config, get_flowby_from_config
 from flowsa.flowbyfunctions import collapse_fbs_sectors
 from flowsa.flowsa_log import reset_log_file, log
+from copy import deepcopy
 
 
 class FlowBySector(_FlowBy):
@@ -99,8 +100,8 @@ class FlowBySector(_FlowBy):
                 config = {}
 
         flowby_generator = (
-            lambda x=method, y=external_config_path, z=download_sources_ok:
-                cls.generateFlowBySector(x, y, z)
+            lambda w=method, x=config, y=external_config_path, z=download_sources_ok:
+                cls.generateFlowBySector(w, x, y, z)
             )
         return super()._getFlowBy(
             file_metadata=file_metadata,
@@ -116,6 +117,7 @@ class FlowBySector(_FlowBy):
     def generateFlowBySector(
         cls,
         method: str,
+        config: dict = None,
         external_config_path: str = None,
         download_sources_ok: bool = settings.DEFAULT_DOWNLOAD_IF_MISSING,
     ) -> 'FlowBySector':
@@ -129,8 +131,12 @@ class FlowBySector(_FlowBy):
             generating them.
         '''
         log.info('Beginning FlowBySector generation for %s', method)
-        method_config = common.load_yaml_dict(method, 'FBS',
-                                              external_config_path)
+        if not config:
+            method_config = common.load_yaml_dict(method, 'FBS',
+                                                  external_config_path)
+        else:
+            method_config = config
+        config_copy = deepcopy(method_config)
 
         # Cache one or more sources by attaching to method_config
         to_cache = method_config.pop('sources_to_cache', {})
@@ -206,8 +212,7 @@ class FlowBySector(_FlowBy):
         esupy.processed_data_mgmt.write_df_to_file(fbs, path_tools.esupy_paths, meta)
         reset_log_file(method, meta)
         metadata.write_metadata(source_name=method,
-                                config=common.load_yaml_dict(
-                                    method, 'FBS', external_config_path),
+                                config=config_copy,
                                 fb_meta=meta,
                                 category='FlowBySector')
 
