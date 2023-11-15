@@ -297,7 +297,8 @@ def load_fba_w_standardized_units(datasource, year, **kwargs):
     :param datasource: string, FBA source name
     :param year: int, year of data
     :param kwargs: optional parameters include flowclass, geographic_level,
-           download_if_missing, allocation_map_to_flow_list
+        #    download_if_missing,
+           allocation_map_to_flow_list
     :return: fba df with standardized units
     """
 
@@ -310,8 +311,8 @@ def load_fba_w_standardized_units(datasource, year, **kwargs):
         fba_dict['flowclass'] = kwargs['flowclass']
     if 'geographic_level' in kwargs:
         fba_dict['geographic_level'] = kwargs['geographic_level']
-    if 'download_FBA_if_missing' in kwargs:
-        fba_dict['download_FBA_if_missing'] = kwargs['download_FBA_if_missing']
+    # if 'download_FBA_if_missing' in kwargs:
+    #     fba_dict['download_FBA_if_missing'] = kwargs['download_FBA_if_missing']
     # load the allocation FBA
     fba = flowsa.flowbyactivity.getFlowByActivity(
         datasource, year, **fba_dict).reset_index(drop=True)

@@ -716,7 +716,8 @@ def get_manufacturing_energy_ratios(parameter_dict):
     mecs = load_fba_w_standardized_units(datasource=parameter_dict.get('energy_fba'),
                                          year=mecs_year,
                                          flowclass='Energy',
-                                         download_FBA_if_missing=True)
+                                        #  download_FBA_if_missing=True
+                                         )
     mecs = (mecs.loc[(mecs['ActivityConsumedBy'] == '31-33') &
                      (mecs['Location'] == '00000') &
                      (mecs['Description'].isin(['Table 3.2', 'Table 2.2'])) &
@@ -727,7 +728,8 @@ def get_manufacturing_energy_ratios(parameter_dict):
     ghgi = load_fba_w_standardized_units(datasource=parameter_dict.get('ghg_fba'),
                                          year=mecs_year,
                                          flowclass='Energy',
-                                         download_FBA_if_missing=True)
+                                        #  download_FBA_if_missing=True
+                                         )
     ghgi = ghgi[ghgi['ActivityConsumedBy']=='Industrial'].reset_index(drop=True)
 
     pct_dict = {}
@@ -789,7 +791,8 @@ def split_HFCs_by_type(fba: FlowByActivity, **_) -> FlowByActivity:
     tbl = fba.config.get('clean_parameter')['flow_fba'] # 4-100
     splits = load_fba_w_standardized_units(datasource=tbl,
                                            year=fba['Year'][0],
-                                           download_FBA_if_missing=True)
+                                        #    download_FBA_if_missing=True
+                                           )
     splits['pct'] = splits['FlowAmount'] / splits['FlowAmount'].sum()
     splits = splits[['FlowName', 'pct']]
 

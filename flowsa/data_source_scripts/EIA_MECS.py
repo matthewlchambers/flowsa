@@ -469,8 +469,10 @@ def clean_mapped_mecs_energy_fba_to_state(
     return fba
 
 
-def update_regions_to_states(fba: FlowByActivity,
-        download_sources_ok: bool = True) -> FlowByActivity:
+def update_regions_to_states(
+    fba: FlowByActivity,
+    # download_sources_ok: bool = True
+) -> FlowByActivity:
     """
     Propogates regions to all states to enable for use in state methods.
     Allocates sectors across states based on employment.
@@ -487,7 +489,9 @@ def update_regions_to_states(fba: FlowByActivity,
                                        if len(x) < 5 else x))
 
     # Allocate MECS based on employment FBS
-    hlp = load_prepare_clean_source(fba, download_sources_ok=download_sources_ok)
+    hlp = load_prepare_clean_source(fba,
+                                    # download_sources_ok=download_sources_ok
+                                    )
 
     # For each region, generate ratios across states for a given sector
     hlp = hlp.merge(region_map, how='left', left_on='Location',

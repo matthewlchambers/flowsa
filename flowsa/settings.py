@@ -38,7 +38,7 @@ output_paths.table = output_paths.base / 'DisplayTables'
 
 output_paths.create_missing()
 
-DEFAULT_DOWNLOAD_IF_MISSING = False
+DOWNLOAD_OK = True
 
 
 def return_pkg_version():

@@ -9,11 +9,12 @@ import numpy as np
 from functools import partial, reduce
 from copy import deepcopy
 from flowsa import literature_values, flowsa_yaml, geo, schema, naics, path_tools
-from flowsa.settings import input_paths
+from flowsa.settings import input_paths, output_paths, DOWNLOAD_OK
 from flowsa.common import get_catalog_info
 from flowsa.flowsa_log import log, vlog
 import esupy.processed_data_mgmt
 import esupy.dqi
+import pathlib
 
 if TYPE_CHECKING:
     from flowsa.flowbysector import FlowBySector
@@ -34,8 +35,8 @@ with open(input_paths.data % 'flowby_config.yaml') as f:
 def get_flowby_from_config(
     name: str,
     config: dict,
-    external_config_path: str = None,
-    download_sources_ok: bool = True
+    # external_config_path: str = None,
+    # download_sources_ok: bool = True
 ) -> FB:
     """
     Loads FBA or FBS dataframe from a config dictionary and attaches that
@@ -46,30 +47,30 @@ def get_flowby_from_config(
     from flowsa.flowbyactivity import FlowByActivity
     from flowsa.flowbysector import FlowBySector
 
-    external_data_path = config.get('external_data_path')
+    # external_data_path = config.get('external_data_path')
 
     if config['data_format'] == 'FBA':
         return FlowByActivity.return_FBA(
             full_name=name,
             config=config,
-            download_ok=download_sources_ok,
-            external_data_path=external_data_path
+            # download_ok=download_sources_ok,
+            # external_data_path=external_data_path
         )
     elif config['data_format'] == 'FBS':
         return FlowBySector.return_FBS(
             method=name,
             config=config,
-            external_config_path=external_config_path,
-            download_sources_ok=download_sources_ok,
-            download_fbs_ok=download_sources_ok,
-            external_data_path=external_data_path
+            # external_config_path=external_config_path,
+            # download_sources_ok=download_sources_ok,
+            # download_fbs_ok=download_sources_ok,
+            # external_data_path=external_data_path
         )
     elif config['data_format'] == 'FBS_outside_flowsa':
         return FlowBySector(
             config['FBS_datapull_fxn'](
-                config=config,
-                external_config_path=external_config_path,
-                full_name=name
+                full_name=name,
+                config=config
+                # external_config_path=external_config_path,
             ),
             full_name=name,
             config=config
@@ -219,44 +220,56 @@ class _FlowBy(pd.DataFrame):
     def _getFlowBy(
         cls,
         file_metadata: esupy.processed_data_mgmt.FileMeta,
-        download_ok: bool,
+        # download_ok: bool,
         flowby_generator: partial,
-        output_path: str,
+        # output_path: str,
         *,
         full_name: str = None,
         config: dict = None,
-        external_data_path: str = None
+        # external_data_path: str = None
     ) -> '_FlowBy':
-        paths = deepcopy(path_tools.esupy_paths)
-        paths.local_path = external_data_path or paths.local_path
-
         attempt_list = (['import local', 'download', 'generate']
-                        if download_ok else ['import local', 'generate'])
+                        if DOWNLOAD_OK else ['import local', 'generate'])
+
+        if file_metadata.category == 'FlowBySector':
+            fb_input_paths = input_paths.fbs
+            fb_output_path = output_paths.fbs
+        elif file_metadata.category == 'FlowByActivity':
+            fb_input_paths = input_paths.fba
+            fb_output_path = output_paths.fba
 
         for attempt in attempt_list:
             log.info(f'Attempting to {attempt} {file_metadata.name_data} '
                      f'{file_metadata.category}')
             if attempt == 'download':
-                esupy.processed_data_mgmt.download_from_remote(
-                    file_metadata,
-                    paths
-                )
+                esupy.processed_data_mgmt.download_from_remote(file_metadata, path_tools.esupy_paths)
+                log.info(f'Downloaded {file_metadata.name_data} {file_metadata.category} '
+                         f'from {path_tools.esupy_paths.remote_path} '
+                         f'to {path_tools.esupy_paths.local_path / file_metadata.category}')
             if attempt == 'generate':
                 flowby_generator()
-            df = esupy.processed_data_mgmt.load_preprocessed_output(
-                file_metadata,
-                paths
+                log.info(f'Generated {file_metadata.name_data} {file_metadata.category} '
+                         f'and saved to {fb_output_path}')
+
+            matching_files = sorted(
+                fb_input_paths.glob_find(f'{file_metadata.name_data}*.{file_metadata.ext}'),
+                key=lambda x: x.stat().st_ctime,
+                reverse=True
             )
-            if df is None:
-                log.info(f'{file_metadata.name_data} {file_metadata.category} '
-                         f'not found in {paths.local_path}')
-            else:
+            if matching_files:
+                df = esupy.processed_data_mgmt.read_into_df(matching_files[0])
                 log.info(f'Successfully loaded {file_metadata.name_data} '
-                         f'{file_metadata.category} from {output_path}')
+                         f'{file_metadata.category} from {matching_files[0].parent}')
                 break
+            else:
+                log.info('Attempt failed')
+
         else:
             log.error(f'{file_metadata.name_data} {file_metadata.category} '
-                      f'could not be found locally, downloaded, or generated')
+                      f'could not be found. If it was downloaded or generated, '
+                      f'ensure that the location it was saved to is added '
+                      f'to settings.input_paths.fbs or settings.input_paths.fba, '
+                      f' and try again.')
         fb = cls(df, full_name=full_name or '', config=config or {})
         return fb
 
@@ -611,8 +624,8 @@ class _FlowBy(pd.DataFrame):
 
     def attribute_flows_to_sectors(
         self: FB,
-        external_config_path: str = None,
-        download_sources_ok: bool = True
+        # external_config_path: str = None,
+        # download_sources_ok: bool = True
     ) -> FB:
         """
         The calling FBA has its activities mapped to sectors, then its flows
@@ -653,7 +666,9 @@ class _FlowBy(pd.DataFrame):
             elif self.config['data_format'] in ['FBA', 'FBS_outside_flowsa']:
                 fb: 'FlowByActivity' = (
                     grouped
-                    .map_to_sectors(external_config_path=external_config_path)
+                    .map_to_sectors(
+                        # external_config_path=external_config_path
+                    )
                     .function_socket('clean_fba_w_sec',
                                      attr=self.config,
                                      method=self.config)
@@ -690,7 +705,7 @@ class _FlowBy(pd.DataFrame):
                          f"target sectors with {attribution_name}")
                 attribution_fbs = fb.load_prepare_attribution_source(
                     attribution_config=step_config,
-                    download_sources_ok=download_sources_ok
+                    # download_sources_ok=download_sources_ok
                 )
                 attributed_fb = fb.proportionally_attribute(attribution_fbs)
 
@@ -698,7 +713,7 @@ class _FlowBy(pd.DataFrame):
                 log.info(f"Multiplying {self.full_name} by {attribution_name}")
                 attribution_fbs = fb.load_prepare_attribution_source(
                     attribution_config=step_config,
-                    download_sources_ok=download_sources_ok
+                    # download_sources_ok=download_sources_ok
                 )
                 attributed_fb = fb.multiplication_attribution(attribution_fbs)
 
@@ -706,7 +721,7 @@ class _FlowBy(pd.DataFrame):
                 log.info(f"Dividing {self.full_name} by {attribution_name}")
                 attribution_fbs = fb.load_prepare_attribution_source(
                     attribution_config=step_config,
-                    download_sources_ok=download_sources_ok
+                    # download_sources_ok=download_sources_ok
                 )
                 attributed_fb = fb.division_attribution(attribution_fbs)
 
@@ -852,7 +867,7 @@ class _FlowBy(pd.DataFrame):
     def load_prepare_attribution_source(
         self: 'FlowByActivity',
         attribution_config=None,
-        download_sources_ok: bool = True
+        # download_sources_ok: bool = True
     ) -> 'FlowBySector':
 
         if attribution_config is None:
@@ -881,8 +896,10 @@ class _FlowBy(pd.DataFrame):
                            or k == 'method_config_keys'},
                         **get_catalog_info(name),
                         **config},
-                download_sources_ok=download_sources_ok
-            ).prepare_fbs(download_sources_ok=download_sources_ok)
+                # download_sources_ok=download_sources_ok
+            ).prepare_fbs(
+                # download_sources_ok=download_sources_ok
+            )
 
         return attribution_fbs
 

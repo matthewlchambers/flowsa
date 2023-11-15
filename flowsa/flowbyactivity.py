@@ -81,8 +81,8 @@ class FlowByActivity(_FlowBy):
         full_name: str,
         year: int = None,
         config: dict = None,
-        download_ok: bool = settings.DEFAULT_DOWNLOAD_IF_MISSING,
-        **kwargs
+        # download_ok: bool = settings.DOWNLOAD_OK,
+        # **kwargs
     ) -> 'FlowByActivity':
         """
         Loads stored data in the FlowByActivity format. If it is not
@@ -90,10 +90,10 @@ class FlowByActivity(_FlowBy):
         download_ok is True), or generate it.
         :param datasource: str, the code of the datasource.
         :param year: int, a year, e.g. 2012
-        :param download_ok: bool, if True will attempt to load from
-            EPA remote server prior to generating
-        :kwargs: keyword arguments to pass to _getFlowBy(). Possible kwargs
-            include config.
+        # :param download_ok: bool, if True will attempt to load from
+        #     EPA remote server prior to generating
+        # :kwargs: keyword arguments to pass to _getFlowBy(). Possible kwargs
+        #     include config.
         :return: a FlowByActivity dataframe
         """
         if year is None and isinstance(config, dict):
@@ -110,12 +110,12 @@ class FlowByActivity(_FlowBy):
         )
         return super()._getFlowBy(
             file_metadata=file_metadata,
-            download_ok=download_ok,
+            # download_ok=download_ok,
             flowby_generator=flowby_generator,
-            output_path=settings.output_paths.fba,
+            # output_path=settings.output_paths.fba,
             full_name=full_name,
             config=config,
-            **kwargs
+            # **kwargs
         )
 
     # TODO: probably only slight modification is needed to allow for material
@@ -363,7 +363,7 @@ class FlowByActivity(_FlowBy):
     def map_to_sectors(
             self: 'FlowByActivity',
             target_year: Literal[2002, 2007, 2012, 2017] = 2012,
-            external_config_path: str = None
+            # external_config_path: str = None
     ) -> 'FlowByActivity':
         """
         Maps the activities in the calling dataframe to industries/sectors, but
@@ -384,8 +384,8 @@ class FlowByActivity(_FlowBy):
             industries.naics_key_from_industry_spec. Gives the desired
             industry/sector aggregation level.
         :param target_year: int, which NAICS year to use.
-        :param external_config_path: str, an external path to search for a
-            crosswalk.
+        # :param external_config_path: str, an external path to search for a
+        #     crosswalk.
         """
         from flowsa.flowbyclean import \
             define_parentincompletechild_descendants, \
@@ -513,7 +513,8 @@ class FlowByActivity(_FlowBy):
                     # ^^^ TODO: Replace or streamline get_...() function
                     (self.config.get('activity_to_sector_mapping')
                      or self.source_name),
-                    fbsconfigpath=external_config_path)
+                    # fbsconfigpath=external_config_path
+                )
                 .astype('object')
                 [['Activity', 'Sector', 'SectorType', 'SectorSourceName']]
             )
@@ -675,8 +676,8 @@ class FlowByActivity(_FlowBy):
 
     def prepare_fbs(
             self: 'FlowByActivity',
-            external_config_path: str = None,
-            download_sources_ok: bool = True
+            # external_config_path: str = None,
+            # download_sources_ok: bool = True
             ) -> 'FlowBySector':
 
         from flowsa.flowbysector import FlowBySector
@@ -686,7 +687,8 @@ class FlowByActivity(_FlowBy):
                 return (
                     pd.concat([
                         fba.prepare_fbs(
-                            external_config_path=external_config_path, download_sources_ok=download_sources_ok)
+                            # external_config_path=external_config_path, download_sources_ok=download_sources_ok
+                        )
                         for fba in (
                             self
                             .select_by_fields()
@@ -710,8 +712,10 @@ class FlowByActivity(_FlowBy):
             .convert_units_and_flows()  # and also map to flow lists
             .function_socket('clean_fba')
             .convert_to_geoscale()
-            .attribute_flows_to_sectors(external_config_path=external_config_path,
-                                        download_sources_ok=download_sources_ok)  # recursive call to prepare_fbs
+            .attribute_flows_to_sectors(
+                # external_config_path=external_config_path,
+                # download_sources_ok=download_sources_ok
+            )  # recursive call to prepare_fbs
             .drop(columns=['ActivityProducedBy', 'ActivityConsumedBy'])
             .aggregate_flowby()
         )
@@ -863,7 +867,7 @@ def getFlowByActivity(
         year,
         flowclass=None,
         geographic_level=None,
-        download_FBA_if_missing=settings.DEFAULT_DOWNLOAD_IF_MISSING
+        # download_FBA_if_missing=settings.DOWNLOAD_OK
         ) -> pd.DataFrame:
     """
     Retrieves stored data in the FlowByActivity format
@@ -873,15 +877,15 @@ def getFlowByActivity(
     'Water' or ['Employment', 'Chemicals']
     :param geographic_level: str, a geographic level of the data.
                              Optional. E.g. 'national', 'state', 'county'.
-    :param download_FBA_if_missing: bool, if True will attempt to load from
-        remote server prior to generating if file not found locally
+    # :param download_FBA_if_missing: bool, if True will attempt to load from
+    #     remote server prior to generating if file not found locally
     :return: a pandas DataFrame in FlowByActivity format
     """
     fba = FlowByActivity.return_FBA(
         full_name=datasource,
-        config={},
+        # config={},
         year=int(year),
-        download_ok=download_FBA_if_missing
+        # download_ok=download_FBA_if_missing
     )
 
     if len(fba) == 0:

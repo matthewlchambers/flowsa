@@ -47,7 +47,8 @@ seeAvailableFlowByModels('FBS')
 # (https://dmap-data-commons-ord.s3.amazonaws.com/index.html?prefix=flowsa/)
 # to run the method
 fbs_water = getFlowBySector('Water_national_2015_m1',
-                            download_FBAs_if_missing=True)
+                            # download_FBAs_if_missing=True
+                            )
 
 # collapse the FBS - output has 'Sector' column instead of
 # 'SectorProducedBy' and 'SectorConsumedBy' columns. The collapsed

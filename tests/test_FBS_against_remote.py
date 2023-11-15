@@ -21,7 +21,9 @@ def test_generate_fbs():
               f"Method: {m}\n"
               "--------------------------------")
         FlowBySector.generateFlowBySector(
-            method=m, download_sources_ok=True)
+            method=m,
+            # download_sources_ok=True
+            )
 
 
 @pytest.mark.skip(reason="Perform targeted test for compare_FBS on PR")

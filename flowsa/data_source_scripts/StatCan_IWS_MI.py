@@ -98,7 +98,10 @@ def sc_parse(*, df_list, year, **_):
     return df
 
 
-def convert_statcan_data_to_US_water_use(df, attr, download_FBA_if_missing):
+def convert_statcan_data_to_US_water_use(
+    df, attr,
+    # download_FBA_if_missing
+    ):
     """
     Use Canadian GDP data to convert 3 digit canadian water use to us water
     use:
@@ -106,16 +109,19 @@ def convert_statcan_data_to_US_water_use(df, attr, download_FBA_if_missing):
     - us gdp
     :param df: df, FBA format
     :param attr: dictionary, attribute data from method yaml for activity set
-    :param download_FBA_if_missing: bool, True if would like to download
-        missing FBAs from Data Commons, False if FBAs should be generated
-        locally
+    # :param download_FBA_if_missing: bool, True if would like to download
+    #     missing FBAs from Data Commons, False if FBAs should be generated
+    #     locally
     :return: df, FBA format, flowamounts converted
     """
 
     # load Canadian GDP data
     gdp = load_fba_w_standardized_units(
         datasource='StatCan_GDP', year=attr['allocation_source_year'],
-        flowclass='Money', download_FBA_if_missing=download_FBA_if_missing)
+        flowclass='Money',
+        # download_FBA_if_missing=download_FBA_if_missing
+        )
+
 
     # drop 31-33
     gdp = gdp[gdp['ActivityProducedBy'] != '31-33']
@@ -147,7 +153,9 @@ def convert_statcan_data_to_US_water_use(df, attr, download_FBA_if_missing):
     us_gdp_load = load_fba_w_standardized_units(
         datasource='BEA_Detail_GrossOutput_IO', year=attr[
             'allocation_source_year'],
-        flowclass='Money', download_FBA_if_missing=download_FBA_if_missing)
+        flowclass='Money',
+        # download_FBA_if_missing=download_FBA_if_missing
+        )
 
     # load bea crosswalk
     cw_load = load_crosswalk('BEA')

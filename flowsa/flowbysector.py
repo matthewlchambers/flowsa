@@ -68,49 +68,46 @@ class FlowBySector(_FlowBy):
         cls,
         method: str,
         config: dict = None,
-        external_config_path: str = None,
-        download_sources_ok: bool = settings.DEFAULT_DOWNLOAD_IF_MISSING,
-        download_fbs_ok: bool = settings.DEFAULT_DOWNLOAD_IF_MISSING,
-        **kwargs
+        # external_config_path: str = None,
+        # download_sources_ok: bool = settings.DOWNLOAD_OK,
+        # download_fbs_ok: bool = settings.DOWNLOAD_OK,
+        # **kwargs
     ) -> 'FlowBySector':
         '''
         Loads stored FlowBySector output. If it is not
         available, tries to download it from EPA's remote server (if
         download_ok is True), or generate it.
         :param method: string, name of the FBS attribution method file to use
-        :param external_config_path: str, path to the FBS method file if
-            loading a file from outside the flowsa repository
-        :param download_fba_ok: bool, if True will attempt to load FBAs
-            used in generating the FBS from EPA's remote server rather than
-            generating (if not found locally)
-        :param download_FBS_if_missing: bool, if True will attempt to load the
-            FBS from EPA's remote server rather than generating it
-            (if not found locally)
-        :kwargs: keyword arguments to pass to _getFlowBy(). Possible kwargs
-            include full_name and config.
+        # :param external_config_path: str, path to the FBS method file if
+        #     loading a file from outside the flowsa repository
+        # :param download_fba_ok: bool, if True will attempt to load FBAs
+        #     used in generating the FBS from EPA's remote server rather than
+        #     generating (if not found locally)
+        # :param download_FBS_if_missing: bool, if True will attempt to load the
+        #     FBS from EPA's remote server rather than generating it
+        #     (if not found locally)
+        # :kwargs: keyword arguments to pass to _getFlowBy(). Possible kwargs
+        #     include full_name and config.
         :return: FlowBySector dataframe
         '''
         file_metadata = metadata.set_fb_meta(method, 'FlowBySector')
 
         if config is None:
             try:
-                config = common.load_yaml_dict(method, 'FBS',
-                                               external_config_path)
+                config = common.load_yaml_dict(method, 'FBS')
             except exceptions.FlowsaMethodNotFoundError:
                 config = {}
 
-        flowby_generator = (
-            lambda w=method, x=config, y=external_config_path, z=download_sources_ok:
-                cls.generateFlowBySector(w, x, y, z)
-            )
+        flowby_generator = lambda m=method, c=config: cls.generateFlowBySector(m, c)
+
         return super()._getFlowBy(
             file_metadata=file_metadata,
-            download_ok=download_fbs_ok,
+            # download_ok=download_fbs_ok,
             flowby_generator=flowby_generator,
-            output_path=settings.output_paths.fbs,
+            # output_path=settings.output_paths.fbs,
             full_name=method,
             config=config,
-            **kwargs
+            # **kwargs
         )
 
     @classmethod
@@ -118,24 +115,20 @@ class FlowBySector(_FlowBy):
         cls,
         method: str,
         config: dict = None,
-        external_config_path: str = None,
-        download_sources_ok: bool = settings.DEFAULT_DOWNLOAD_IF_MISSING,
+        # external_config_path: str = None,
+        # download_sources_ok: bool = settings.DOWNLOAD_OK,
     ) -> 'FlowBySector':
         '''
         Generates a FlowBySector dataset.
         :param method: str, name of FlowBySector method .yaml file to use.
-        :param external_config_path: str, optional. If given, tells flowsa
-            where to look for the method yaml specified above.
-        :param download_fba_ok: bool, optional. Whether to attempt to download
-            source data FlowByActivity files from EPA server rather than
-            generating them.
+        # :param external_config_path: str, optional. If given, tells flowsa
+        #     where to look for the method yaml specified above.
+        # :param download_fba_ok: bool, optional. Whether to attempt to download
+        #     source data FlowByActivity files from EPA server rather than
+        #     generating them.
         '''
         log.info('Beginning FlowBySector generation for %s', method)
-        if not config:
-            method_config = common.load_yaml_dict(method, 'FBS',
-                                                  external_config_path)
-        else:
-            method_config = config
+        method_config = config or common.load_yaml_dict(method, 'FBS')
         config_copy = deepcopy(method_config)
 
         # Cache one or more sources by attaching to method_config
@@ -155,10 +148,12 @@ class FlowBySector(_FlowBy):
                         **get_catalog_info(source_name),
                         **config
                     },
-                    external_config_path=external_config_path,
-                    download_sources_ok=download_sources_ok
-                ).prepare_fbs(external_config_path=external_config_path,
-                              download_sources_ok=download_sources_ok)
+                    # external_config_path=external_config_path,
+                    # download_sources_ok=download_sources_ok
+                ).prepare_fbs(
+                    # external_config_path=external_config_path,
+                    # download_sources_ok=download_sources_ok
+                )
             )
             # ^^^ This is done with a for loop instead of a dict comprehension
             #     so that later entries in method_config['sources_to_cache']
@@ -176,10 +171,12 @@ class FlowBySector(_FlowBy):
                     **get_catalog_info(source_name),
                     **config
                 },
-                external_config_path=external_config_path,
-                download_sources_ok=download_sources_ok
-            ).prepare_fbs(external_config_path=external_config_path,
-                          download_sources_ok=download_sources_ok)
+                # external_config_path=external_config_path,
+                # download_sources_ok=download_sources_ok
+            ).prepare_fbs(
+                # external_config_path=external_config_path,
+                # download_sources_ok=download_sources_ok
+            )
             for source_name, config in sources.items()
         ])
 
@@ -248,8 +245,8 @@ class FlowBySector(_FlowBy):
 
     def prepare_fbs(
         self: 'FlowBySector',
-        external_config_path: str = None,
-        download_sources_ok: bool = True
+        # external_config_path: str = None,
+        # download_sources_ok: bool = True
     ) -> 'FlowBySector':
         if 'activity_sets' in self.config:
             try:
@@ -271,8 +268,10 @@ class FlowBySector(_FlowBy):
             .function_socket('clean_fbs')
             .select_by_fields()
             .convert_fips_to_geoscale()
-            .attribute_flows_to_sectors(external_config_path=external_config_path,
-                                        download_sources_ok=download_sources_ok)
+            .attribute_flows_to_sectors(
+                # external_config_path=external_config_path,
+                # download_sources_ok=download_sources_ok
+            )
             .aggregate_flowby()  # necessary after consolidating geoscale
         )
 
@@ -368,10 +367,10 @@ class _FBSSeries(pd.Series):
 
 def getFlowBySector(
         methodname,
-        fbsconfigpath=None,
-        download_FBAs_if_missing=settings.DEFAULT_DOWNLOAD_IF_MISSING,
-        download_FBS_if_missing=settings.DEFAULT_DOWNLOAD_IF_MISSING,
-        **kwargs
+        # fbsconfigpath=None,
+        # download_FBAs_if_missing=settings.DOWNLOAD_OK,
+        # download_FBS_if_missing=settings.DOWNLOAD_OK,
+        # **kwargs
         ) -> pd.DataFrame:
     """
     Loads stored FlowBySector output or generates it if it doesn't exist,
@@ -388,19 +387,19 @@ def getFlowBySector(
     """
     fbs = FlowBySector.return_FBS(
         method=methodname,
-        external_config_path=fbsconfigpath,
-        download_sources_ok=download_FBAs_if_missing,
-        download_fbs_ok=download_FBS_if_missing,
-        **kwargs
+        # external_config_path=fbsconfigpath,
+        # download_sources_ok=download_FBAs_if_missing,
+        # download_fbs_ok=download_FBS_if_missing,
+        # **kwargs
     )
     return pd.DataFrame(fbs)
 
 
 def collapse_FlowBySector(
         methodname,
-        fbsconfigpath=None,
-        download_FBAs_if_missing=settings.DEFAULT_DOWNLOAD_IF_MISSING,
-        download_FBS_if_missing=settings.DEFAULT_DOWNLOAD_IF_MISSING
+        # fbsconfigpath=None,
+        # download_FBAs_if_missing=settings.DOWNLOAD_OK,
+        # download_FBS_if_missing=settings.DOWNLOAD_OK
         ) -> pd.DataFrame:
     """
     Returns fbs with one sector column in place of two
@@ -410,8 +409,11 @@ def collapse_FlowBySector(
     from flowsa.validation import check_for_negative_flowamounts, \
     check_for_nonetypes_in_sector_col
 
-    fbs = getFlowBySector(methodname, fbsconfigpath,
-                          download_FBAs_if_missing, download_FBS_if_missing)
+    fbs = getFlowBySector(methodname,
+                        #   fbsconfigpath,
+                        #   download_FBAs_if_missing,
+                        #   download_FBS_if_missing
+                          )
     fbs_collapsed = collapse_fbs_sectors(fbs)
 
     # check data for NoneType in sector column

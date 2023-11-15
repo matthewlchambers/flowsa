@@ -32,8 +32,8 @@ import facilitymatcher
 def stewicombo_to_sector(
         config,
         full_name,
-        external_config_path: str = None,
-        **_
+        # external_config_path: str = None,
+        # **_
         ) -> 'FlowBySector':
     """
     Returns emissions from stewicombo in fbs format, requires stewi >= 0.9.5
@@ -48,8 +48,8 @@ def stewicombo_to_sector(
                 'soil'), use None to include all compartments
         functions: list of functions (str) to call for additional processing
     :param method: dictionary, FBS method
-    :param external_config_path, str, optional path to an FBS method outside
-        flowsa repo
+    # :param external_config_path, str, optional path to an FBS method outside
+    #     flowsa repo
     :return: FlowBySector object
     """
     inventory_name = config.get('local_inventory_name')
@@ -88,7 +88,8 @@ def stewicombo_to_sector(
         df = reassign_process_to_sectors(
                 df, config['inventory_dict']['NEI'],
                 config['reassign_process_to_sectors'],
-                external_config_path)
+                # external_config_path
+            )
 
     fbs = prepare_stewi_fbs(df, config)
 
@@ -144,7 +145,10 @@ def stewi_to_sector(
     return fbs
 
 
-def reassign_process_to_sectors(df, year, file_list, external_config_path):
+def reassign_process_to_sectors(
+    df, year, file_list,
+    # external_config_path
+    ):
     """
     Reassigns emissions from a specific process or SCC and NAICS combination
     to a new NAICS.
@@ -160,10 +164,10 @@ def reassign_process_to_sectors(df, year, file_list, external_config_path):
     df_adj = pd.DataFrame()
     for file in file_list:
         fpath = input_paths.process_adjustments % f"{file}.csv"
-        if external_config_path:
-            f_out_path = f"{external_config_path}process_adjustments/{file}.csv"
-            if os.path.isfile(f_out_path):
-                fpath = f_out_path
+        # if external_config_path:
+        #     f_out_path = f"{external_config_path}process_adjustments/{file}.csv"
+        #     if os.path.isfile(f_out_path):
+        #         fpath = f_out_path
         log.debug(f"modifying processes from {fpath}")
         df_adj0 = pd.read_csv(fpath, dtype='str')
         df_adj = pd.concat([df_adj, df_adj0], ignore_index=True)

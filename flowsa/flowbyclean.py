@@ -35,7 +35,7 @@ def return_primary_activity_column(fba: FlowByActivity) -> \
 
 def load_prepare_clean_source(
         self: 'FB',
-        download_sources_ok: bool = True
+        # download_sources_ok: bool = True
     ) -> 'FB':
     """
     Add doc string
@@ -52,22 +52,26 @@ def load_prepare_clean_source(
                    or k == 'method_config_keys'},
                 **get_catalog_info(name),
                 **config},
-        download_sources_ok=download_sources_ok
-        ).prepare_fbs(download_sources_ok=download_sources_ok)
+        # download_sources_ok=download_sources_ok
+        ).prepare_fbs(
+            # download_sources_ok=download_sources_ok
+            )
     return clean_fbs
 
 
 def weighted_average(
         fba: 'FlowByActivity',
-        download_sources_ok: bool = True,
-        **kwargs
+        # download_sources_ok: bool = True,
+        # **kwargs
     ) -> 'FlowByActivity':
     """
     This method determines weighted average
     """
 
     # load secondary FBS
-    other = load_prepare_clean_source(fba, download_sources_ok=download_sources_ok)
+    other = load_prepare_clean_source(fba,
+                                    #   download_sources_ok=download_sources_ok
+                                      )
 
     log.info('Taking weighted average of %s by %s.',
              fba.full_name, other.full_name)
@@ -128,15 +132,17 @@ def weighted_average(
 
 def substitute_nonexistent_values(
         fb: 'FB',
-        download_sources_ok: bool = True,
-        **kwargs
+        # download_sources_ok: bool = True,
+        # **kwargs
     ) -> 'FB':
     """
     Fill missing values with data from another geoscale
     """
 
     # load secondary FBS
-    other = load_prepare_clean_source(fb, download_sources_ok)
+    other = load_prepare_clean_source(fb,
+                                    #   download_sources_ok
+                                      )
 
     log.info('Substituting nonexistent values in %s with %s.',
              fb.full_name, other.full_name)
@@ -407,8 +413,8 @@ def attribute_national_to_states(fba: FlowByActivity, **_) -> FlowByActivity:
 
 def calculate_flow_per_person(
         fbs: 'FlowBySector',
-        download_sources_ok: bool = True,
-        **_
+        # download_sources_ok: bool = True,
+        # **_
     ) -> 'FlowBySector':
     """
     Calculates FlowAmount per person (or other metric) per year based on
@@ -416,7 +422,8 @@ def calculate_flow_per_person(
     clean_fbs function
     """
     bls = load_prepare_clean_source(fbs,
-                                    download_sources_ok=download_sources_ok)
+                                    # download_sources_ok=download_sources_ok
+                                    )
     cols = ['Location', 'Year', 'SectorProducedBy']
     if bls['SectorProducedBy'].isna().all():
         bls = bls.assign(SectorProducedBy = bls['SectorConsumedBy'])

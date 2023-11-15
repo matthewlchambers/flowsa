@@ -16,9 +16,9 @@ of formatting.
     :param flowclass: str, a 'Class' of the flow. Optional. E.g. 'Water'
     :param geographic_level: str, a geographic level of the data.
         Optional. E.g. 'national', 'state', 'county'.
-    :param download_FBA_if_missing: bool, if True will attempt to load from
-        remote server prior to generating if file not found locally,
-        optional, default is False
+    # :param download_FBA_if_missing: bool, if True will attempt to load from
+    #     remote server prior to generating if file not found locally,
+    #     optional, default is False
     :return: a pandas DataFrame in FlowByActivity format
 
 """

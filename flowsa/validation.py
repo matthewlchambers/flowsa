@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import flowsa
 import flowsa.flowbysector
+from flowsa import settings
 from flowsa.flowbysector import FlowBySector
 from flowsa.flowbyfunctions import aggregator, collapse_fbs_sectors
 from flowsa.flowsa_log import log, vlog
@@ -211,18 +212,23 @@ def compare_FBS_results(fbs1, fbs2, ignore_metasources=False,
     """
     import flowsa
 
+    saved_download_setting = settings.DOWNLOAD_OK
+    settings.DOWNLOAD_OK = compare_to_remote
     # load first file
-    df1 = flowsa.flowbysector.getFlowBySector(fbs1,
-                                              download_FBS_if_missing=compare_to_remote)
+    df1 = flowsa.getFlowBySector(fbs1,
+                                #  download_FBS_if_missing=compare_to_remote
+                                 )
     # load second file
     if compare_to_remote:
         # Generate the FBS locally and then immediately load
         df2 = FlowBySector.generateFlowBySector(
-            method=fbs2, download_sources_ok=True)
+            method=fbs2,
+            # download_sources_ok=True
+            )
     else:
         df2 = flowsa.flowbysector.getFlowBySector(fbs2)
     df_m = compare_FBS(df1, df2, ignore_metasources=ignore_metasources)
-
+    settings.DOWNLOAD_OK = saved_download_setting
     return df_m
 
 
