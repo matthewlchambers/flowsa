@@ -7,6 +7,7 @@
 import os
 import pprint
 from os import path
+from functools import cache
 import re
 import yaml
 import pandas as pd
@@ -278,11 +279,13 @@ def get_flowsa_base_name(
     return filename
 
 
+@cache
 def return_true_source_catalog_name(sourcename):
     """
     Drop any extensions on source name until find the name in source catalog
     """
-    while (load_yaml_dict('source_catalog').get(sourcename) is None) & (
+    source_catalog = load_yaml_dict('source_catalog')
+    while (source_catalog.get(sourcename) is None) & (
             '_' in sourcename):
         sourcename = sourcename.rsplit("_", 1)[0]
     return sourcename
