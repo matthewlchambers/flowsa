@@ -267,9 +267,10 @@ class _FlowBy(pd.DataFrame):
         else:
             log.error(f'{file_metadata.name_data} {file_metadata.category} '
                       f'could not be found. If it was downloaded or generated, '
-                      f'ensure that the location it was saved to is added '
+                      f'ensure that the location it was saved to is added \n'
                       f'to settings.input_paths.fbs or settings.input_paths.fba, '
                       f' and try again.')
+            raise FileNotFoundError
         fb = cls(df, full_name=full_name or '', config=config or {})
         return fb
 
