@@ -12,8 +12,10 @@ from esupy.processed_data_mgmt import FileMeta, write_metadata_to_file, \
 from flowsa.common import return_true_source_catalog_name, get_catalog_info
 from flowsa.flowsa_log import log
 from flowsa.settings import PKG, PKG_VERSION_NUMBER, WRITE_FORMAT, \
-    GIT_HASH, GIT_HASH_LONG
+    GIT_HASH, GIT_HASH_LONG, output_paths
 from flowsa import path_tools
+import json
+from typing import Literal
 
 
 def set_fb_meta(name_data, category):
@@ -35,7 +37,13 @@ def set_fb_meta(name_data, category):
     return fb_meta
 
 
-def write_metadata(source_name, config, fb_meta, category, **kwargs):
+def write_metadata(
+    source_name: str,
+    config: dict,
+    fb_meta: FileMeta,
+    category: Literal['FlowBySector', 'FlowByActivity'],
+    **kwargs
+):
     """
     Write the metadata and output as a JSON in a local directory
     :param source_name: string, source name for either a FBA or FBS dataset
@@ -49,7 +57,19 @@ def write_metadata(source_name, config, fb_meta, category, **kwargs):
 
     fb_meta.tool_meta = return_fb_meta_data(
         source_name, config, category, **kwargs)
-    write_metadata_to_file(path_tools.esupy_paths, fb_meta)
+
+    if category == 'FlowBySector':
+        path = output_paths.fbs
+    elif category == 'FlowByActivity':
+        path = output_paths.fba
+
+    fname = f'{fb_meta.name_data}_v{fb_meta.tool_version}'
+    if fb_meta.git_hash is not None:
+        fname = f'{fname}_{fb_meta.git_hash}'
+    fname = f'{fname}_metadata.json'
+
+    with (path / fname).open('w') as f:
+        f.write(json.dumps(fb_meta.__dict__, indent=4))
 
 
 def return_fb_meta_data(source_name, config, category, **kwargs):
@@ -74,16 +94,11 @@ def return_fb_meta_data(source_name, config, category, **kwargs):
         # for FBAs
         source_name = return_true_source_catalog_name(source_name)
 
-    # create empty dictionary
-    fb_dict = {}
-    # add url of FlowBy method at time of commit
-    fb_dict['method_url'] = \
-        f'https://github.com/USEPA/flowsa/blob/{GIT_HASH_LONG}/flowsa/' \
-        f'methods/{category.lower()}methods/{source_name}.yaml'
+    if GIT_HASH_LONG:
+        method_data['method_url'] = (f'https://github.com/USEPA/flowsa/blob/{GIT_HASH_LONG}/flowsa/'
+                                     f'methods/{category.lower()}methods/{source_name}.yaml')
 
-    fb_dict.update(method_data)
-
-    return fb_dict
+    return method_data
 
 
 def return_fbs_method_data(source_name, config):

@@ -162,7 +162,7 @@ class FlowBySector(_FlowBy):
         # Generate FBS from method_config
         sources = method_config.pop('source_names')
 
-        fbs = pd.concat([
+        fbs: 'FlowBySector' = pd.concat([
             get_flowby_from_config(
                 name=source_name,
                 config={
@@ -206,7 +206,10 @@ class FlowBySector(_FlowBy):
         # Save fbs and metadata
         log.info(f'FBS generation complete, saving {method} to file')
         meta = metadata.set_fb_meta(method, 'FlowBySector')
-        esupy.processed_data_mgmt.write_df_to_file(fbs, path_tools.esupy_paths, meta)
+        fname = f'{meta.name_data}_v{meta.tool_version}'
+        if meta.git_hash is not None:
+            fname = f'{fname}_{meta.git_hash}'
+        fbs.to_parquet(settings.output_paths.fbs / f'{fname}.parquet')
         reset_log_file(method, meta)
         metadata.write_metadata(source_name=method,
                                 config=config_copy,

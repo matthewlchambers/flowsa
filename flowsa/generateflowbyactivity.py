@@ -15,7 +15,7 @@ import flowsa
 from esupy.processed_data_mgmt import write_df_to_file
 from esupy.remote import make_url_request
 from flowsa.common import load_env_file_key, load_yaml_dict, get_flowsa_base_name
-from flowsa.settings import input_paths
+from flowsa.settings import input_paths, output_paths
 from flowsa.path_tools import esupy_paths
 from flowsa.flowsa_log import log, reset_log_file
 from flowsa.metadata import set_fb_meta, write_metadata
@@ -174,7 +174,10 @@ def process_data_frame(*, df, source, year, config):
     # save as parquet file
     name_data = set_fba_name(source, year)
     meta = set_fb_meta(name_data, "FlowByActivity")
-    write_df_to_file(flow_df, esupy_paths, meta)
+    fname = f'{meta.name_data}_v{meta.tool_version}'
+    if meta.git_hash is not None:
+        fname = f'{fname}_{meta.git_hash}'
+    flow_df.to_parquet(output_paths.fba / f'{fname}.parquet')
     write_metadata(source, config, meta, "FlowByActivity", year=year)
     log.info("FBA generated and saved for %s", name_data)
     # rename the log file saved to local directory
