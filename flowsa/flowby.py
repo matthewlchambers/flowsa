@@ -7,14 +7,11 @@ from typing import List, Literal, TypeVar, TYPE_CHECKING
 import pandas as pd
 import numpy as np
 from functools import partial, reduce
-from copy import deepcopy
-from flowsa import literature_values, flowsa_yaml, geo, schema, naics, path_tools
-from flowsa.settings import input_paths, output_paths, DOWNLOAD_OK
+from flowsa import literature_values, flowsa_yaml, geo, schema, naics, path_tools, settings
 from flowsa.common import get_catalog_info
 from flowsa.flowsa_log import log, vlog
 import esupy.processed_data_mgmt
 import esupy.dqi
-import pathlib
 
 if TYPE_CHECKING:
     from flowsa.flowbysector import FlowBySector
@@ -26,7 +23,7 @@ NAME_SEP_CHAR = '.'
 # ^^^ Used to separate source/activity set names as part of 'full_name' attr
 
 
-with open(input_paths.data % 'flowby_config.yaml') as f:
+with open(settings.input_paths.data % 'flowby_config.yaml') as f:
     flowby_config = flowsa_yaml.load(f)
     # ^^^ Replaces schema.py
 
@@ -229,14 +226,14 @@ class _FlowBy(pd.DataFrame):
         # external_data_path: str = None
     ) -> '_FlowBy':
         attempt_list = (['import local', 'download', 'generate']
-                        if DOWNLOAD_OK else ['import local', 'generate'])
+                        if settings.DOWNLOAD_OK else ['import local', 'generate'])
 
         if file_metadata.category == 'FlowBySector':
-            fb_input_paths = input_paths.fbs
-            fb_output_path = output_paths.fbs
+            fb_input_paths = settings.input_paths.fbs
+            fb_output_path = settings.output_paths.fbs
         elif file_metadata.category == 'FlowByActivity':
-            fb_input_paths = input_paths.fba
-            fb_output_path = output_paths.fba
+            fb_input_paths = settings.input_paths.fba
+            fb_output_path = settings.output_paths.fba
 
         for attempt in attempt_list:
             log.info(f'Attempting to {attempt} {file_metadata.name_data} '
@@ -295,7 +292,7 @@ class _FlowBy(pd.DataFrame):
         )
 
         conversion_table = pd.concat([
-            pd.read_csv(input_paths.data % 'unit_conversion.csv'),
+            pd.read_csv(settings.input_paths.data % 'unit_conversion.csv'),
             pd.Series({'old_unit': 'Canadian Dollar',
                        'new_unit': 'USD',
                        'conversion_factor': 1 / exchange_rate}).to_frame().T
