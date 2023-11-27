@@ -10,17 +10,6 @@ LOCAL_PATH = Path(appdirs.user_data_dir()) / 'flowsa'
 esupy_paths = esupy.processed_data_mgmt.Paths()
 esupy_paths.local_path = LOCAL_PATH
 
-
-# # This is for  functions that require a Paths() object from esupy
-# def esupy_paths(remote = None, local = None) -> esupy.processed_data_mgmt.Paths:
-#     paths = esupy.processed_data_mgmt.Paths()
-#     if local is not None:
-#         paths.local_path = local
-#     else:
-#         paths.local_path = LOCAL_PATH
-#     if remote is not None:
-#         paths.remote_path = remote
-
 class PathList(list):
     def __init__(self, val=None):
         if isinstance(val, Iterable) and not isinstance(val, str):
@@ -63,7 +52,7 @@ class PathList(list):
         Searches all folders in the list for filenames matching a given glob.
         Return a list of Path objects pointing to these files.
         '''
-        return [f for p in self for f in p.glob(glob)]
+        return PathList([f for p in self for f in p.glob(glob)])
 
 
 class PathListValidator:
